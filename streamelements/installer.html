@@ -212,6 +212,42 @@ input[type="text"]:focus, select:focus { border-color: #6366f1; box-shadow: 0 0 
 .left-col { display: flex; flex-direction: column; gap: 16px; }
 /* ---- Right column stacking ---- */
 .right-col { display: flex; flex-direction: column; gap: 16px; }
+
+/* ---- Quick-Import highlight box ---- */
+.quick-import-box {
+  background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08));
+  border: 1px solid rgba(99,102,241,0.30);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.quick-import-box .qi-title {
+  font-size: 0.88rem; font-weight: 700; color: #a5b4fc; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.quick-import-box .qi-steps {
+  list-style: none; padding: 0; margin: 10px 0 0;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.quick-import-box .qi-steps li {
+  font-size: 0.78rem; color: #64748b; line-height: 1.55;
+  padding-left: 18px; position: relative;
+}
+.quick-import-box .qi-steps li::before {
+  content: attr(data-n);
+  position: absolute; left: 0; top: 0;
+  color: #6366f1; font-weight: 700;
+}
+.quick-import-box .qi-steps li strong { color: #94a3b8; }
+.manual-toggle {
+  font-size: 0.78rem; color: #475569; cursor: pointer;
+  margin-top: 12px; display: flex; align-items: center; gap: 5px;
+  user-select: none;
+}
+.manual-toggle:hover { color: #64748b; }
+.manual-section { margin-top: 12px; }
+details.manual-details > summary { list-style: none; }
+details.manual-details > summary::-webkit-details-marker { display: none; }
 </style>
 </head>
 <body>
@@ -225,7 +261,7 @@ input[type="text"]:focus, select:focus { border-color: #6366f1; box-shadow: 0 0 
       <p>Setup-Assistent für StreamElements &amp; OBS</p>
     </div>
   </div>
-  <span class="badge">v1.1</span>
+  <span class="badge">v1.4</span>
 </div>
 
 <!-- ====== LIVE PREVIEW HERO ====== -->
@@ -340,46 +376,72 @@ input[type="text"]:focus, select:focus { border-color: #6366f1; box-shadow: 0 0 
     <div class="card">
       <div class="section-heading">
         <div class="section-num">3</div>
-        <div class="section-title">Widget-Code in StreamElements einfügen</div>
-      </div>
-      <p style="margin-bottom:13px;font-size:0.82rem">Kopiere jeden Tab-Inhalt in den passenden Tab im StreamElements Widget-Editor.</p>
-
-      <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('html',this)">HTML</button>
-        <button class="tab-btn"        onclick="switchTab('css',this)">CSS</button>
-        <button class="tab-btn"        onclick="switchTab('js',this)">JS</button>
-        <button class="tab-btn"        onclick="switchTab('fields',this)">Fields</button>
+        <div class="section-title">Widget in StreamElements einrichten</div>
       </div>
 
-      <div id="tab-html" class="tab-pane active">
-        <div class="code-wrap">
-          <button class="copy-btn" onclick="copyTab('html')">Kopieren</button>
-          <pre id="code-html"></pre>
+      <!-- ✨ Quick Import -->
+      <div class="quick-import-box">
+        <div class="qi-title">✨ Schnell-Import <span style="font-size:0.72rem;font-weight:500;color:#6366f1;background:rgba(99,102,241,0.15);padding:2px 8px;border-radius:99px">empfohlen</span></div>
+        <p style="font-size:0.8rem;color:#64748b;margin:0">Eine Datei herunterladen, in StreamElements importieren — alle Einstellungen sind bereits ausgefüllt und direkt in SE bearbeitbar.</p>
+        <div class="btn-row" style="margin-top:10px">
+          <button class="btn btn-primary" id="btn-dl-overlay" onclick="downloadSeOverlay()">📦 Overlay herunterladen (.json)</button>
+          <a class="btn btn-secondary" href="https://streamelements.com/dashboard/overlays" target="_blank" rel="noopener">🎬 SE öffnen →</a>
         </div>
-      </div>
-      <div id="tab-css" class="tab-pane">
-        <div class="code-wrap">
-          <button class="copy-btn" onclick="copyTab('css')">Kopieren</button>
-          <pre id="code-css"></pre>
-        </div>
-      </div>
-      <div id="tab-js" class="tab-pane">
-        <div class="code-wrap">
-          <button class="copy-btn" onclick="copyTab('js')">Kopieren</button>
-          <pre id="code-js"></pre>
-        </div>
-      </div>
-      <div id="tab-fields" class="tab-pane">
-        <div class="code-wrap">
-          <button class="copy-btn" onclick="copyTab('fields')">Kopieren</button>
-          <pre id="code-fields"></pre>
-        </div>
-        <div class="notice">Fields JSON im <strong>Fields</strong>-Tab in StreamElements einfügen. <strong>DATA-Tab bleibt leer.</strong></div>
+        <ul class="qi-steps">
+          <li data-n="1">Oben auf <strong>„Overlay herunterladen"</strong> klicken</li>
+          <li data-n="2">StreamElements → <strong>My Overlays → New → Import</strong></li>
+          <li data-n="3">JSON-Datei hochladen → Fertig! <strong>Alle Einstellungen vorausgefüllt</strong>, im Fields-Tab editierbar</li>
+        </ul>
       </div>
 
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="downloadAll()">⬇ Alle 4 Dateien herunterladen</button>
-      </div>
+      <hr class="card-divider">
+
+      <!-- Manual fallback (collapsible) -->
+      <details class="manual-details">
+        <summary>
+          <span class="manual-toggle">▸ Manuell einrichten (4 Code-Blöcke kopieren)</span>
+        </summary>
+        <div class="manual-section">
+          <p style="margin-bottom:13px;font-size:0.82rem">Kopiere jeden Tab-Inhalt in den passenden Tab im StreamElements Widget-Editor.</p>
+
+          <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('html',this)">HTML</button>
+            <button class="tab-btn"        onclick="switchTab('css',this)">CSS</button>
+            <button class="tab-btn"        onclick="switchTab('js',this)">JS</button>
+            <button class="tab-btn"        onclick="switchTab('fields',this)">Fields</button>
+          </div>
+
+          <div id="tab-html" class="tab-pane active">
+            <div class="code-wrap">
+              <button class="copy-btn" onclick="copyTab('html')">Kopieren</button>
+              <pre id="code-html"></pre>
+            </div>
+          </div>
+          <div id="tab-css" class="tab-pane">
+            <div class="code-wrap">
+              <button class="copy-btn" onclick="copyTab('css')">Kopieren</button>
+              <pre id="code-css"></pre>
+            </div>
+          </div>
+          <div id="tab-js" class="tab-pane">
+            <div class="code-wrap">
+              <button class="copy-btn" onclick="copyTab('js')">Kopieren</button>
+              <pre id="code-js"></pre>
+            </div>
+          </div>
+          <div id="tab-fields" class="tab-pane">
+            <div class="code-wrap">
+              <button class="copy-btn" onclick="copyTab('fields')">Kopieren</button>
+              <pre id="code-fields"></pre>
+            </div>
+            <div class="notice">Fields JSON im <strong>Fields</strong>-Tab in StreamElements einfügen. <strong>DATA-Tab bleibt leer.</strong></div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-secondary" onclick="downloadAll()">⬇ Alle 4 Dateien herunterladen</button>
+          </div>
+        </div>
+      </details>
     </div>
 
     <!-- ④ Einrichtungsschritte -->
@@ -391,32 +453,26 @@ input[type="text"]:focus, select:focus { border-color: #6366f1; box-shadow: 0 0 
       <div class="steps">
         <div class="step">
           <div class="step-body">
-            <div class="step-title">Custom Widget anlegen</div>
-            <div class="step-desc">StreamElements → My Overlays → Edit → <strong>Add Widget → Custom Widget</strong></div>
+            <div class="step-title">Overlay herunterladen &amp; importieren</div>
+            <div class="step-desc">Auf <strong>„Overlay herunterladen"</strong> klicken → StreamElements → <strong>My Overlays → New → Import</strong> → JSON-Datei auswählen.</div>
           </div>
         </div>
         <div class="step">
           <div class="step-body">
-            <div class="step-title">HTML, CSS &amp; JS einfügen</div>
-            <div class="step-desc">Jeden Code-Block oben (Tab ③) kopieren &amp; in den passenden Tab einfügen.</div>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-body">
-            <div class="step-title">Fields JSON einfügen</div>
-            <div class="step-desc">Fields-Tab oben kopieren &amp; im <strong>Fields-Tab</strong> in StreamElements einfügen.</div>
+            <div class="step-title">Last.fm Zugangsdaten eintragen</div>
+            <div class="step-desc">Widget in SE öffnen → <strong>Fields-Tab</strong> → <code style="background:#0f1117;padding:1px 5px;border-radius:3px;color:#a5b4fc;font-size:0.8em">lastfm_user</code> &amp; <code style="background:#0f1117;padding:1px 5px;border-radius:3px;color:#a5b4fc;font-size:0.8em">lastfm_key</code> ausfüllen. Alle anderen Einstellungen sind bereits vorausgefüllt.</div>
           </div>
         </div>
         <div class="step">
           <div class="step-body">
             <div class="step-title">Overlay-URL in OBS einbinden</div>
-            <div class="step-desc">StreamElements → Launch → URL kopieren → OBS Browser Source. Breite: <strong>400</strong>, Höhe: <strong>120</strong>.</div>
+            <div class="step-desc">StreamElements → Launch → URL kopieren → OBS Browser Source. Breite: <strong>400</strong>, Höhe: <strong>120</strong>. Eigenes CSS: <code style="background:#0f1117;padding:1px 5px;border-radius:3px;color:#f0abfc;font-size:0.8em">body{background:rgba(0,0,0,0)}</code></div>
           </div>
         </div>
         <div class="step">
           <div class="step-body">
             <div class="step-title">Musik abspielen &amp; fertig ✓</div>
-            <div class="step-desc">Song starten → Widget erscheint als iPhone-Notification auf dem Stream.</div>
+            <div class="step-desc">Song starten → Widget erscheint als Notification auf dem Stream. Design jederzeit im SE <strong>Fields-Tab</strong> ändern.</div>
           </div>
         </div>
       </div>
@@ -1362,6 +1418,121 @@ function copyTab(name) {
   });
 }
 
+/* ---- SE Overlay JSON (Quick Import) ---- */
+function buildSeWidgetHtml() {
+  return '<div class="np-card np-hidden" id="np-card">\n'
+    + '  <div class="np-art-wrap">\n'
+    + '    <img id="np-art" src="" alt="Album Art">\n'
+    + '    <img id="np-art-next" src="" alt="">\n'
+    + '  </div>\n'
+    + '  <div class="np-info">\n'
+    + '    <div class="np-status" id="np-status">\n'
+    + '      <div class="np-bars" id="np-bars">\n'
+    + '        <div class="np-bar"></div>\n'
+    + '        <div class="np-bar"></div>\n'
+    + '        <div class="np-bar"></div>\n'
+    + '        <div class="np-bar"></div>\n'
+    + '      </div>\n'
+    + '      <span class="np-now-label" id="np-now-label">Now Playing</span>\n'
+    + '    </div>\n'
+    + '    <div class="np-track"  id="np-track"></div>\n'
+    + '    <div class="np-artist" id="np-artist"></div>\n'
+    + '    <div class="np-album"  id="np-album"></div>\n'
+    + '    <div class="np-progress-wrap">\n'
+    + '      <div class="np-progress-bar"><div class="np-progress-fill" id="np-progress-fill"></div></div>\n'
+    + '      <span class="np-time" id="np-time"></span>\n'
+    + '    </div>\n'
+    + '  </div>\n'
+    + '</div>';
+}
+
+function downloadSeOverlay() {
+  if (!cachedCSS || !cachedJS) {
+    alert('Bitte warte kurz — Dateien werden noch geladen.'); return;
+  }
+  var user  = (document.getElementById('inp-user').value  || '').trim();
+  var key   = (document.getElementById('inp-key').value   || '').trim();
+  var theme = document.getElementById('sel-theme').value  || 'dark';
+  var shape = document.getElementById('sel-shape').value  || 'default';
+  var anim  = document.getElementById('sel-anim').value   || 'ios';
+  var fs    = document.getElementById('sel-fontsize').value || 'medium';
+  var showBars  = document.getElementById('chk-bars').checked;
+  var showLabel = document.getElementById('chk-label').checked;
+  var showAlbum = document.getElementById('chk-album').checked;
+
+  /* Generate a simple random ID for the overlay items */
+  function randId() {
+    return Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10);
+  }
+
+  var overlay = {
+    type:   'overlay',
+    name:   'Now Playing Widget',
+    width:  1920,
+    height: 1080,
+    settings: {},
+    items: [
+      {
+        _id:     randId(),
+        type:    'html',
+        name:    'Now Playing – Frosted Glass',
+        visible: true,
+        locked:  false,
+        x:       0,
+        y:       0,
+        width:   400,
+        height:  120,
+        layer:   0,
+        muted:   false,
+        opacity: 100,
+        flip:    { x: false, y: false },
+        crop:    { top: 0, right: 0, bottom: 0, left: 0 },
+        border:  {},
+        shadow:  {},
+        groupId: null,
+        settings: {
+          type:   'html',
+          html:   buildSeWidgetHtml(),
+          css:    cachedCSS,
+          js:     codeStore.js,
+          fields: JSON.parse(codeStore.fields),
+          data: {
+            lastfm_user:   user,
+            lastfm_key:    key,
+            theme:         theme,
+            shape:         shape,
+            animation:     anim,
+            font_size:     fs,
+            show_bars:     showBars,
+            show_label:    showLabel,
+            show_album:    showAlbum,
+            custom_width:  0,
+            custom_radius: 0,
+            custom_blur:   0
+          }
+        }
+      }
+    ]
+  };
+
+  var json = JSON.stringify(overlay, null, 2);
+  var blob = new Blob([json], { type: 'application/json' });
+  var a    = document.createElement('a');
+  a.href   = URL.createObjectURL(blob);
+  a.download = 'now-playing-overlay.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+
+  /* Visual feedback on button */
+  var btn = document.getElementById('btn-dl-overlay');
+  if (btn) {
+    var orig = btn.textContent;
+    btn.textContent = '✓ Heruntergeladen!';
+    btn.style.background = '#22c55e';
+    setTimeout(function () { btn.textContent = orig; btn.style.background = ''; }, 2200);
+  }
+}
+
 /* ---- Download ---- */
 function downloadAll() {
   var files = [
@@ -1490,8 +1661,8 @@ loadFiles();
     </div>
 
     <div class="card">
-      <h2>⚙️ Einstellungen nachträglich ändern</h2>
-      <p style="margin-bottom:12px">Jederzeit in StreamElements → Widget bearbeiten → <strong>Fields-Tab</strong>:</p>
+      <h2>⚙️ Einstellungen in StreamElements ändern</h2>
+      <p style="margin-bottom:12px">Jederzeit in StreamElements → Widget bearbeiten → <strong>Fields-Tab</strong> — kein Code nötig:</p>
       <table style="width:100%;border-collapse:collapse;font-size:0.8rem">
         <tr><td style="padding:5px 8px;border-bottom:1px solid #1a1e2e;font-family:monospace;color:#a5b4fc">lastfm_user / lastfm_key</td><td style="padding:5px 8px;border-bottom:1px solid #1a1e2e;color:#cbd5e1">Last.fm Zugangsdaten</td></tr>
         <tr><td style="padding:5px 8px;border-bottom:1px solid #1a1e2e;font-family:monospace;color:#a5b4fc">theme</td><td style="padding:5px 8px;border-bottom:1px solid #1a1e2e;color:#cbd5e1">dark / frosted / light / minimal / neon / liquid</td></tr>
