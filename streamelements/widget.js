@@ -1,0 +1,361 @@
+/* ============================================================
+   NOW PLAYING WIDGET — widget.js
+   StreamElements Custom Widget JS
+   ============================================================ */
+
+'use strict';
+
+/* ---------- Config defaults (overridden by SE fieldData) ---------- */
+var fields = {
+  lastfm_user:   '',
+  lastfm_key:    '',
+  theme:         'dark',
+  shape:         'default',
+  animation:     'ios',
+  show_album:    true,
+  show_bars:     true,
+  show_label:    true,
+  font_size:     'medium',
+  custom_width:  0,
+  custom_radius: 0,
+  custom_blur:   0
+};
+
+var DEFAULT_ART = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"%3E%3Crect width="72" height="72" fill="%23222"%2F%3E%3Ccircle cx="36" cy="36" r="14" fill="%23444"%2F%3E%3Ccircle cx="36" cy="36" r="5" fill="%23222"%2F%3E%3C%2Fsvg%3E';
+
+/* ---------- State ---------- */
+var lastTrackId  = null;
+var lastArtUrl   = null;
+var progressMs   = 0;
+var durationMs   = 0;
+var isPlaying    = false;
+var cardVisible  = false;
+var progressInterval = null;
+var pollTimer    = null;
+
+/* ---------- Helpers ---------- */
+var root    = document.documentElement;
+var cardEl  = document.getElementById('np-card');
+var trackEl = document.getElementById('np-track');
+var artistEl= document.getElementById('np-artist');
+var albumEl = document.getElementById('np-album');
+var artEl   = document.getElementById('np-art');
+var artNextEl = document.getElementById('np-art-next');
+var fillEl  = document.getElementById('np-progress-fill');
+var timeEl  = document.getElementById('np-time');
+var barsEl  = document.getElementById('np-bars');
+var labelEl = document.getElementById('np-now-label');
+var statusEl= document.getElementById('np-status');
+
+function fmt(ms) {
+  if (!ms || isNaN(ms)) return '';
+  var s = Math.floor(ms / 1000);
+  var m = Math.floor(s / 60);
+  s = s % 60;
+  return m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+function fieldBool(key, defaultVal) {
+  var v = fields[key];
+  if (v === undefined || v === null) return defaultVal;
+  return v === true || v === 'true';
+}
+
+function setOrReset(prop, val) {
+  var n = parseFloat(val);
+  if (n > 0) {
+    root.style.setProperty(prop, n + 'px');
+  } else {
+    root.style.removeProperty(prop);
+  }
+}
+
+/* ---------- Appearance ---------- */
+function applyAppearance() {
+  // Theme class
+  cardEl.classList.remove('np-theme-dark','np-theme-frosted','np-theme-light','np-theme-minimal','np-theme-neon','np-theme-liquid');
+  if (fields.theme && fields.theme !== 'dark') {
+    cardEl.classList.add('np-theme-' + fields.theme);
+  }
+
+  // Animation class
+  cardEl.classList.remove('np-anim-fade','np-anim-slide-left','np-anim-slide-right','np-anim-scale','np-anim-slide-bottom');
+  if (fields.animation && fields.animation !== 'ios') {
+    cardEl.classList.add('np-anim-' + fields.animation);
+  }
+
+  // Custom overrides
+  setOrReset('--np-width', fields.custom_width);
+  setOrReset('--np-blur',  fields.custom_blur);
+
+  // Shape / Radius — custom_radius wins, otherwise use shape preset
+  var customR = parseFloat(fields.custom_radius);
+  if (customR > 0) {
+    root.style.setProperty('--np-radius', customR + 'px');
+  } else {
+    var shapeMap = { pill: '60px', sharp: '6px', square: '0px' };
+    var sr = shapeMap[fields.shape];
+    if (sr) { root.style.setProperty('--np-radius', sr); }
+    else     { root.style.removeProperty('--np-radius'); }
+  }
+
+  // Visibility toggles
+  if (albumEl)  albumEl.style.display = fieldBool('show_album', true) ? '' : 'none';
+  if (barsEl)   barsEl.style.display  = fieldBool('show_bars',  true) ? '' : 'none';
+  if (labelEl)  labelEl.style.display = fieldBool('show_label', true) ? '' : 'none';
+  if (statusEl) statusEl.style.display = (fieldBool('show_bars', true) || fieldBool('show_label', true)) ? '' : 'none';
+
+  // Font size
+  var fontSizeMap = { small: '12px', medium: '15px', large: '18px' };
+  var fs = fontSizeMap[fields.font_size];
+  if (fs) {
+    root.style.setProperty('--np-track-size',  fs);
+    root.style.setProperty('--np-artist-size', (parseInt(fs) - 3) + 'px');
+    root.style.setProperty('--np-album-size',  (parseInt(fs) - 5) + 'px');
+  }
+}
+
+/* ---------- iPhone-style animation helpers ---------- */
+function removeAnimClasses() {
+  cardEl.classList.remove('np-notify-in', 'np-notify-out', 'np-track-bump');
+}
+
+function showCard() {
+  if (cardVisible) return;
+  cardVisible = true;
+  removeAnimClasses();
+  cardEl.classList.remove('np-hidden');
+  // Force reflow so animation triggers fresh
+  void cardEl.offsetWidth;
+  cardEl.classList.add('np-notify-in');
+  cardEl.addEventListener('animationend', function onIn() {
+    cardEl.removeEventListener('animationend', onIn);
+    cardEl.classList.remove('np-notify-in');
+  });
+}
+
+function hideCard() {
+  if (!cardVisible) return;
+  cardVisible = false;
+  removeAnimClasses();
+  // Force reflow
+  void cardEl.offsetWidth;
+  cardEl.classList.add('np-notify-out');
+  cardEl.addEventListener('animationend', function onOut() {
+    cardEl.removeEventListener('animationend', onOut);
+    cardEl.classList.remove('np-notify-out');
+    cardEl.classList.add('np-hidden');
+  });
+}
+
+function bumpTrack() {
+  removeAnimClasses();
+  void cardEl.offsetWidth;
+  cardEl.classList.add('np-track-bump');
+  cardEl.addEventListener('animationend', function onBump() {
+    cardEl.removeEventListener('animationend', onBump);
+    cardEl.classList.remove('np-track-bump');
+  });
+}
+
+/* ---------- Art crossfade ---------- */
+function crossfadeArt(newUrl) {
+  if (!newUrl) newUrl = DEFAULT_ART;
+  if (newUrl === lastArtUrl) return;
+  lastArtUrl = newUrl;
+
+  if (!artEl) return;
+
+  var preload = new Image();
+  preload.onload = function () {
+    if (!artNextEl) {
+      artEl.src = newUrl;
+      return;
+    }
+    artNextEl.style.transition = 'opacity 0s';
+    artNextEl.style.opacity    = '0';
+    artNextEl.src              = newUrl;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        artNextEl.style.transition = 'opacity 0.5s ease';
+        artNextEl.style.opacity    = '1';
+        setTimeout(function () {
+          artEl.src                  = newUrl;
+          artNextEl.style.transition = 'opacity 0s';
+          artNextEl.style.opacity    = '0';
+        }, 520);
+      });
+    });
+  };
+  preload.onerror = function () {
+    artEl.src = DEFAULT_ART;
+    lastArtUrl = DEFAULT_ART;
+  };
+  preload.src = newUrl;
+}
+
+/* ---------- Progress ---------- */
+function startProgress() {
+  if (progressInterval) clearInterval(progressInterval);
+  if (!isPlaying) return;
+  progressInterval = setInterval(function () {
+    progressMs += 1000;
+    if (durationMs > 0 && progressMs > durationMs) progressMs = durationMs;
+    renderProgress();
+  }, 1000);
+}
+
+function renderProgress() {
+  if (!fillEl) return;
+  var pct = (durationMs > 0) ? (progressMs / durationMs * 100) : 0;
+  fillEl.style.width = Math.min(100, pct) + '%';
+  if (timeEl) {
+    if (durationMs > 0) {
+      timeEl.textContent = fmt(progressMs) + ' / ' + fmt(durationMs);
+    } else {
+      timeEl.textContent = fmt(progressMs);
+    }
+  }
+}
+
+/* ---------- Show track ---------- */
+function showTrack(data) {
+  var trackId = (data.artist || '') + '|' + (data.title || '');
+  var isNewTrack = (trackId !== lastTrackId);
+
+  // Update text content
+  if (trackEl)  trackEl.textContent  = data.title  || '';
+  if (artistEl) artistEl.textContent = data.artist || '';
+  if (albumEl)  albumEl.textContent  = data.album  || '';
+
+  // Playing state
+  isPlaying = !!data.isPlaying;
+  if (cardEl) {
+    if (isPlaying) {
+      cardEl.classList.remove('np-paused');
+    } else {
+      cardEl.classList.add('np-paused');
+    }
+  }
+
+  // Progress
+  progressMs = data.progressMs || 0;
+  durationMs = data.durationMs || 0;
+  renderProgress();
+  startProgress();
+
+  if (!cardVisible) {
+    // Card hidden → slide in from top (iPhone notification style)
+    lastTrackId = trackId;
+    crossfadeArt(data.artUrl);
+    showCard();
+  } else if (isNewTrack) {
+    // New track while card is showing → bump animation + crossfade art
+    lastTrackId = trackId;
+    crossfadeArt(data.artUrl);
+    bumpTrack();
+  } else {
+    // Same track update (progress tick, play/pause)
+    crossfadeArt(data.artUrl);
+  }
+}
+
+/* ---------- Last.fm polling ---------- */
+function pollLastFm() {
+  var user = fields.lastfm_user;
+  var key  = fields.lastfm_key;
+  if (!user || !key) return;
+
+  var url = 'https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks'
+    + '&user=' + encodeURIComponent(user)
+    + '&api_key=' + encodeURIComponent(key)
+    + '&format=json&limit=1';
+
+  fetch(url)
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data.error) {
+        // Show error in widget so user knows what's wrong
+        if (trackEl)  trackEl.textContent  = 'Last.fm Error ' + data.error;
+        if (artistEl) artistEl.textContent = data.message || '';
+        if (albumEl)  albumEl.textContent  = '';
+        showCard();
+        return;
+      }
+
+      var tracks = data.recenttracks && data.recenttracks.track;
+      if (!tracks) { hideCard(); return; }
+      var track = Array.isArray(tracks) ? tracks[0] : tracks;
+      if (!track) { hideCard(); return; }
+
+      // Detect now playing: @attr.nowplaying OR recent scrobble within 8 min
+      var isNowPlaying = !!(track['@attr'] && track['@attr'].nowplaying === 'true');
+      var isRecentScrobble = false;
+      if (!isNowPlaying && track.date && track.date.uts) {
+        var ageSec = Math.floor(Date.now() / 1000) - parseInt(track.date.uts, 10);
+        isRecentScrobble = ageSec >= 0 && ageSec < 480;
+      }
+
+      if (!isNowPlaying && !isRecentScrobble) {
+        hideCard();
+        return;
+      }
+
+      var artUrl = '';
+      var images = track.image;
+      if (images && images.length) {
+        // Prefer extralarge > large > medium
+        for (var i = images.length - 1; i >= 0; i--) {
+          if (images[i]['#text']) { artUrl = images[i]['#text']; break; }
+        }
+      }
+
+      showTrack({
+        title:      track.name || '',
+        artist:     (track.artist && (track.artist['#text'] || track.artist.name)) || '',
+        album:      (track.album && track.album['#text']) || '',
+        artUrl:     artUrl,
+        isPlaying:  isNowPlaying,
+        progressMs: 0,
+        durationMs: 0
+      });
+    })
+    .catch(function (err) {
+      console.error('[NP] poll error', err);
+    });
+}
+
+/* ---------- SE event handlers ---------- */
+window.addEventListener('onWidgetLoad', function (e) {
+  window.__np_started = true;
+  var detail = e.detail || {};
+  fields = Object.assign(fields, detail.fieldData || {});
+  applyAppearance();
+  if (artEl) artEl.src = DEFAULT_ART;
+  if (fields.lastfm_user && fields.lastfm_key) {
+    pollLastFm();
+    pollTimer = setInterval(pollLastFm, 5000);
+  }
+});
+
+window.addEventListener('onSessionUpdate', function (e) {
+  var detail = e.detail || {};
+  if (detail.fieldData) {
+    fields = Object.assign(fields, detail.fieldData);
+    applyAppearance();
+  }
+});
+
+/* ---------- Startup fallback — fires if onWidgetLoad never comes ---------- */
+/* Handles SE preview mode, direct file opens, and misconfigured overlays   */
+document.addEventListener('DOMContentLoaded', function () {
+  setTimeout(function () {
+    if (window.__np_started) return;
+    applyAppearance();
+    if (artEl) artEl.src = DEFAULT_ART;
+    if (fields.lastfm_user && fields.lastfm_key) {
+      pollLastFm();
+      pollTimer = setInterval(pollLastFm, 5000);
+    }
+  }, 1500);
+});

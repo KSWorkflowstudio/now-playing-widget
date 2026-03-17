@@ -1,0 +1,395 @@
+/* ============================================================
+   NOW PLAYING WIDGET — Frosted Glass / Kindle Style
+   StreamElements Custom Widget CSS
+   ============================================================ */
+
+/* ---------- CSS Custom Properties (theme contract) ---------- */
+:root {
+  --np-width:        400px;
+  --np-radius:       18px;
+  --np-blur:         28px;
+  --np-padding:      14px 16px;
+  --np-gap:          14px;
+  --np-art-size:     72px;
+
+  --np-bg:           rgba(10, 10, 20, 0.72);
+  --np-border:       rgba(255,255,255,0.10);
+  --np-shadow:       0 8px 40px rgba(0,0,0,0.55);
+
+  --np-font:         'Inter', 'Segoe UI', sans-serif;
+  --np-track-color:  #ffffff;
+  --np-artist-color: rgba(255,255,255,0.75);
+  --np-album-color:  rgba(255,255,255,0.45);
+  --np-track-size:   15px;
+  --np-artist-size:  13px;
+  --np-album-size:   11px;
+
+  --np-progress-h:   3px;
+  --np-progress-bg:  rgba(255,255,255,0.15);
+  --np-progress-fill:#1db954;
+
+  --np-viz-color:    rgba(255,255,255,0.55);
+  --np-transition-ms:500;
+
+  --np-body-bg:      transparent;
+}
+
+/* ---------- Reset / Base ---------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--np-body-bg);
+  font-family: var(--np-font);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* ---------- Card ---------- */
+.np-card {
+  display: flex;
+  align-items: center;
+  gap: var(--np-gap);
+  width: var(--np-width);
+  padding: var(--np-padding);
+  background: var(--np-bg);
+  backdrop-filter: blur(var(--np-blur)) saturate(180%) brightness(108%);
+  -webkit-backdrop-filter: blur(var(--np-blur)) saturate(180%) brightness(108%);
+  border-radius: var(--np-radius);
+  border: 1px solid var(--np-border);
+  box-shadow:
+    var(--np-shadow),
+    inset 0 1px 0 rgba(255,255,255,0.13),
+    inset 0 -1px 0 rgba(0,0,0,0.18);
+  will-change: transform, opacity;
+  position: relative;
+  overflow: hidden;
+}
+
+.np-card.np-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------- iPhone-style notification animations ---------- */
+@keyframes np-notify-in {
+  0%   { transform: translateY(-120%) scale(0.92); opacity: 0; }
+  45%  { opacity: 1; }
+  62%  { transform: translateY(10px)  scale(1.02); }
+  78%  { transform: translateY(-5px)  scale(0.99); }
+  90%  { transform: translateY(2px)   scale(1.005); }
+  100% { transform: translateY(0)     scale(1); opacity: 1; }
+}
+
+@keyframes np-notify-out {
+  0%   { transform: translateY(0)     scale(1);    opacity: 1; }
+  25%  { transform: translateY(6px)   scale(0.98); opacity: 1; }
+  100% { transform: translateY(-115%) scale(0.92); opacity: 0; }
+}
+
+@keyframes np-track-bump {
+  0%   { transform: translateY(0);  }
+  28%  { transform: translateY(-9px) scale(0.97); }
+  58%  { transform: translateY(4px)  scale(1.01); }
+  80%  { transform: translateY(-2px); }
+  100% { transform: translateY(0);  }
+}
+
+.np-card.np-notify-in  { animation: np-notify-in  0.62s cubic-bezier(0.34, 1.3, 0.64, 1) forwards; }
+.np-card.np-notify-out { animation: np-notify-out 0.38s cubic-bezier(0.55, 0, 0.8, 1) forwards; }
+.np-card.np-track-bump { animation: np-track-bump 0.42s cubic-bezier(0.34, 1.2, 0.64, 1); }
+
+/* ---------- Additional animation keyframes ---------- */
+@keyframes np-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes np-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes np-slide-left-in {
+  0%   { transform: translateX(-115%) scale(0.94); opacity: 0; }
+  55%  { transform: translateX(8px)   scale(1.01); opacity: 1; }
+  78%  { transform: translateX(-3px)  scale(0.99); }
+  100% { transform: translateX(0)     scale(1);    opacity: 1; }
+}
+@keyframes np-slide-left-out {
+  0%   { transform: translateX(0)      scale(1);    opacity: 1; }
+  25%  { transform: translateX(8px)    scale(0.98); opacity: 1; }
+  100% { transform: translateX(-115%)  scale(0.94); opacity: 0; }
+}
+@keyframes np-slide-right-in {
+  0%   { transform: translateX(115%)  scale(0.94); opacity: 0; }
+  55%  { transform: translateX(-8px)  scale(1.01); opacity: 1; }
+  78%  { transform: translateX(3px)   scale(0.99); }
+  100% { transform: translateX(0)     scale(1);    opacity: 1; }
+}
+@keyframes np-slide-right-out {
+  0%   { transform: translateX(0)      scale(1);    opacity: 1; }
+  25%  { transform: translateX(-8px)   scale(0.98); opacity: 1; }
+  100% { transform: translateX(115%)   scale(0.94); opacity: 0; }
+}
+@keyframes np-scale-in {
+  0%   { transform: scale(0.70); opacity: 0; }
+  62%  { transform: scale(1.05); opacity: 1; }
+  80%  { transform: scale(0.97); }
+  100% { transform: scale(1);    opacity: 1; }
+}
+@keyframes np-scale-out {
+  0%   { transform: scale(1);    opacity: 1; }
+  28%  { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(0.70); opacity: 0; }
+}
+@keyframes np-slide-bottom-in {
+  0%   { transform: translateY(115%)  scale(0.94); opacity: 0; }
+  55%  { transform: translateY(-8px)  scale(1.01); opacity: 1; }
+  78%  { transform: translateY(3px)   scale(0.99); }
+  100% { transform: translateY(0)     scale(1);    opacity: 1; }
+}
+@keyframes np-slide-bottom-out {
+  0%   { transform: translateY(0)     scale(1);    opacity: 1; }
+  25%  { transform: translateY(-8px)  scale(0.98); opacity: 1; }
+  100% { transform: translateY(115%)  scale(0.94); opacity: 0; }
+}
+
+/* Override default animation when a specific anim class is active */
+.np-anim-fade.np-notify-in          { animation: np-fade-in          0.45s ease                          forwards; }
+.np-anim-fade.np-notify-out         { animation: np-fade-out         0.35s ease                          forwards; }
+.np-anim-slide-left.np-notify-in    { animation: np-slide-left-in    0.52s cubic-bezier(0.34,1.2,0.64,1) forwards; }
+.np-anim-slide-left.np-notify-out   { animation: np-slide-left-out   0.36s cubic-bezier(0.55,0,0.8,1)    forwards; }
+.np-anim-slide-right.np-notify-in   { animation: np-slide-right-in   0.52s cubic-bezier(0.34,1.2,0.64,1) forwards; }
+.np-anim-slide-right.np-notify-out  { animation: np-slide-right-out  0.36s cubic-bezier(0.55,0,0.8,1)    forwards; }
+.np-anim-scale.np-notify-in         { animation: np-scale-in         0.48s cubic-bezier(0.34,1.3,0.64,1) forwards; }
+.np-anim-scale.np-notify-out        { animation: np-scale-out        0.32s cubic-bezier(0.55,0,0.8,1)    forwards; }
+.np-anim-slide-bottom.np-notify-in  { animation: np-slide-bottom-in  0.52s cubic-bezier(0.34,1.2,0.64,1) forwards; }
+.np-anim-slide-bottom.np-notify-out { animation: np-slide-bottom-out 0.36s cubic-bezier(0.55,0,0.8,1)    forwards; }
+
+/* ---------- Album Art ---------- */
+.np-art-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: var(--np-art-size);
+  height: var(--np-art-size);
+  border-radius: calc(var(--np-radius) - 4px);
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+}
+
+.np-art-wrap img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+#np-art-next {
+  opacity: 0;
+  z-index: 1;
+}
+
+/* ---------- Info block ---------- */
+.np-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.np-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.np-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+
+.np-bar {
+  width: 3px;
+  background: var(--np-viz-color);
+  border-radius: 2px;
+  animation: np-bar-bounce 0.8s ease-in-out infinite alternate;
+  transform-origin: bottom;
+}
+.np-bar:nth-child(1) { animation-duration: 0.72s; animation-delay: 0s;    height: 60%; }
+.np-bar:nth-child(2) { animation-duration: 0.60s; animation-delay: 0.1s;  height: 100%; }
+.np-bar:nth-child(3) { animation-duration: 0.85s; animation-delay: 0.05s; height: 80%; }
+.np-bar:nth-child(4) { animation-duration: 0.65s; animation-delay: 0.15s; height: 50%; }
+
+@keyframes np-bar-bounce {
+  0%   { transform: scaleY(0.25); }
+  100% { transform: scaleY(1); }
+}
+
+/* Pause bars when not playing */
+.np-card.np-paused .np-bar {
+  animation-play-state: paused;
+  transform: scaleY(0.25);
+}
+
+.np-now-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--np-progress-fill);
+  opacity: 0.9;
+}
+
+.np-track {
+  font-size: var(--np-track-size);
+  font-weight: 600;
+  color: var(--np-track-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.np-artist {
+  font-size: var(--np-artist-size);
+  color: var(--np-artist-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.np-album {
+  font-size: var(--np-album-size);
+  color: var(--np-album-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Progress bar ---------- */
+.np-progress-wrap {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.np-progress-bar {
+  flex: 1;
+  height: var(--np-progress-h);
+  background: var(--np-progress-bg);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.np-progress-fill {
+  height: 100%;
+  background: var(--np-progress-fill);
+  border-radius: 99px;
+  width: 0%;
+  transition: width 1s linear;
+}
+
+.np-time {
+  font-size: 9px;
+  color: var(--np-album-color);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Preset Themes ---------- */
+.np-theme-light {
+  --np-bg:           rgba(255,255,255,0.68);
+  --np-border:       rgba(0,0,0,0.08);
+  --np-shadow:       0 8px 40px rgba(0,0,0,0.18);
+  --np-track-color:  #111111;
+  --np-artist-color: rgba(0,0,0,0.65);
+  --np-album-color:  rgba(0,0,0,0.40);
+  --np-progress-bg:  rgba(0,0,0,0.12);
+  --np-viz-color:    rgba(0,0,0,0.45);
+}
+
+.np-theme-minimal {
+  --np-bg:           rgba(0,0,0,0.45);
+  --np-blur:         8px;
+  --np-border:       transparent;
+  --np-shadow:       none;
+  --np-radius:       8px;
+}
+
+.np-theme-neon {
+  --np-bg:           rgba(5, 0, 20, 0.80);
+  --np-border:       rgba(120, 40, 255, 0.45);
+  --np-progress-fill:#a855f7;
+  --np-viz-color:    rgba(168, 85, 247, 0.75);
+}
+
+/* ---------- Frosted Glass — warm Kindle-style frosted glass ---------- */
+.np-theme-frosted {
+  --np-bg:           rgba(22, 18, 35, 0.70);
+  --np-blur:         32px;
+  --np-border:       rgba(255, 240, 210, 0.13);
+  --np-shadow:       0 8px 40px rgba(0,0,0,0.60);
+  --np-track-color:  #f5f0ff;
+  --np-artist-color: rgba(235, 220, 255, 0.78);
+  --np-album-color:  rgba(210, 195, 240, 0.50);
+  --np-progress-fill:#c4a0ff;
+  --np-viz-color:    rgba(200, 180, 255, 0.60);
+  box-shadow:
+    0 8px 40px rgba(0,0,0,0.60),
+    inset 0 1.5px 0 rgba(255,245,220,0.18),
+    inset 0 -1px 0 rgba(150,100,255,0.12);
+}
+
+/* ---------- Liquid Glass — Apple-style fluid iridescent glass ---------- */
+.np-theme-liquid {
+  --np-bg:           rgba(255, 255, 255, 0.14);
+  --np-blur:         48px;
+  --np-border:       rgba(255, 255, 255, 0.32);
+  --np-shadow:
+    0 8px 48px rgba(120, 80, 255, 0.22),
+    0 2px 12px rgba(0, 0, 0, 0.22);
+  --np-track-color:  #ffffff;
+  --np-artist-color: rgba(255, 255, 255, 0.85);
+  --np-album-color:  rgba(255, 255, 255, 0.58);
+  --np-progress-bg:  rgba(255, 255, 255, 0.20);
+  --np-progress-fill:#e8d5ff;
+  --np-viz-color:    rgba(255, 255, 255, 0.80);
+  backdrop-filter: blur(48px) saturate(240%) brightness(128%) contrast(102%);
+  -webkit-backdrop-filter: blur(48px) saturate(240%) brightness(128%) contrast(102%);
+  box-shadow:
+    0 8px 48px rgba(120, 80, 255, 0.22),
+    0 2px 12px rgba(0, 0, 0, 0.22),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(200, 180, 255, 0.18);
+}
+
+/* Iridescent sheen overlay */
+.np-theme-liquid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    138deg,
+    rgba(255, 255, 255, 0.28) 0%,
+    rgba(190, 140, 255, 0.10) 28%,
+    rgba(80,  210, 255, 0.09) 56%,
+    rgba(255, 220, 180, 0.07) 80%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.np-theme-liquid .np-art-wrap,
+.np-theme-liquid .np-info {
+  position: relative;
+  z-index: 1;
+}

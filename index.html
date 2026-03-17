@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Now Playing Widget – Einrichtung</title>
+<style>
+/* ---- Reset & Base ---- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0b0d14;
+  color: #e2e8f0;
+  min-height: 100vh;
+  padding: 28px 16px 72px;
+}
+h1 { font-size: 1.55rem; font-weight: 700; }
+h2 { font-size: 0.92rem; font-weight: 700; margin-bottom: 14px; color: #fff; letter-spacing: 0.01em; }
+p  { color: #94a3b8; font-size: 0.87rem; line-height: 1.6; }
+a  { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---- Wrapper ---- */
+.page-wrap { max-width: 980px; margin: 0 auto; }
+
+/* ---- Page header ---- */
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px;
+}
+.page-header-left { display: flex; align-items: center; gap: 14px; }
+.page-header-left p { margin-top: 3px; font-size: 0.83rem; }
+.badge {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff; font-size: 0.7rem; font-weight: 700;
+  padding: 3px 10px; border-radius: 99px; white-space: nowrap;
+}
+
+/* ---- LIVE PREVIEW HERO ---- */
+.preview-hero {
+  background: radial-gradient(circle at 18% 55%, rgba(100,30,200,0.40) 0%, transparent 44%),
+              radial-gradient(circle at 78% 25%, rgba(0,110,230,0.32) 0%, transparent 40%),
+              radial-gradient(circle at 52% 105%, rgba(10,190,110,0.20) 0%, transparent 36%),
+              linear-gradient(160deg, #08091a 0%, #0e1323 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.07);
+  margin-bottom: 22px;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 200px;
+  position: relative;
+  overflow: hidden;
+}
+.preview-hero-label {
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: rgba(255,255,255,0.28);
+  margin-bottom: 20px; display: flex; align-items: center; gap: 7px;
+}
+.preview-hero-label::before,
+.preview-hero-label::after {
+  content: ''; flex: 1; height: 1px;
+  background: rgba(255,255,255,0.10); display: block; width: 60px;
+}
+.preview-iframe-wrap {
+  width: 440px; max-width: 100%; height: 150px;
+  position: relative; overflow: visible;
+}
+.preview-iframe-wrap iframe {
+  width: 100%; height: 100%; border: none; display: block;
+  background: transparent; overflow: visible;
+}
+
+/* ---- Setup grid (2 columns) ---- */
+.setup-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 720px) { .setup-grid { grid-template-columns: 1fr; } }
+
+/* ---- Cards ---- */
+.card {
+  background: #161824;
+  border: 1px solid #252840;
+  border-radius: 14px;
+  padding: 20px;
+}
+
+/* ---- Section heading with number badge ---- */
+.section-heading {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+}
+.section-num {
+  flex-shrink: 0;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff; font-size: 0.75rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.section-title { font-size: 0.92rem; font-weight: 700; color: #fff; }
+
+/* ---- Inputs ---- */
+label { display: block; font-size: 0.8rem; color: #8892a4; margin-bottom: 5px; font-weight: 500; }
+input[type="text"], select {
+  width: 100%; padding: 9px 12px;
+  background: #0b0d14; border: 1px solid #252840;
+  border-radius: 8px; color: #e2e8f0; font-size: 0.87rem;
+  outline: none; transition: border-color 0.18s;
+}
+input[type="text"]:focus, select:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+.field { margin-bottom: 13px; }
+.field:last-child { margin-bottom: 0; }
+.field-hint { font-size: 0.75rem; color: #475569; margin-top: 4px; }
+
+/* ---- Divider ---- */
+.card-divider { border: none; border-top: 1px solid #252840; margin: 16px 0; }
+
+/* ---- Toggle rows ---- */
+.toggle-group { display: flex; flex-direction: column; gap: 0; }
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 0; border-bottom: 1px solid #1c1f30;
+}
+.toggle-row:last-child { border-bottom: none; }
+.toggle-row span { font-size: 0.84rem; color: #cbd5e1; }
+.toggle-row input[type="checkbox"] { accent-color: #6366f1; width: 16px; height: 16px; cursor: pointer; }
+
+/* ---- Buttons ---- */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 18px; border-radius: 8px; border: none;
+  font-size: 0.85rem; font-weight: 600; cursor: pointer;
+  transition: opacity 0.18s, transform 0.1s;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary  { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; }
+.btn-secondary{ background: #252840; color: #e2e8f0; }
+.btn:hover { opacity: 0.85; }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+/* ---- Tabs ---- */
+.tabs { display: flex; gap: 0; margin-bottom: 0; border-bottom: 1px solid #252840; }
+.tab-btn {
+  padding: 7px 14px; background: none; border: none;
+  color: #64748b; font-size: 0.8rem; font-weight: 600;
+  cursor: pointer; border-bottom: 2px solid transparent;
+  transition: color 0.18s, border-color 0.18s;
+}
+.tab-btn.active { color: #818cf8; border-bottom-color: #6366f1; }
+.tab-pane { display: none; padding-top: 12px; }
+.tab-pane.active { display: block; }
+
+/* ---- Code display ---- */
+.code-wrap {
+  position: relative;
+  background: #08090f; border-radius: 8px;
+  border: 1px solid #252840; overflow: hidden;
+  max-height: 260px;
+}
+.code-wrap pre {
+  padding: 12px 14px; overflow: auto; max-height: 260px;
+  font-size: 0.73rem; line-height: 1.55; color: #8892a4;
+  white-space: pre; font-family: 'Fira Code', 'Cascadia Code', 'SF Mono', monospace;
+}
+.copy-btn {
+  position: absolute; top: 7px; right: 7px;
+  background: #252840; color: #e2e8f0; border: none;
+  border-radius: 6px; padding: 3px 10px; font-size: 0.73rem;
+  cursor: pointer; font-weight: 600; transition: background 0.15s;
+}
+.copy-btn:hover { background: #6366f1; color: #fff; }
+
+/* ---- Steps ---- */
+.steps { counter-reset: step; display: flex; flex-direction: column; gap: 0; }
+.step {
+  display: flex; gap: 12px; padding: 11px 0;
+  border-bottom: 1px solid #1c1f30;
+}
+.step:last-child { border-bottom: none; }
+.step::before {
+  counter-increment: step;
+  content: counter(step);
+  flex-shrink: 0; width: 24px; height: 24px;
+  border-radius: 50%; background: #252840;
+  color: #818cf8; font-size: 0.75rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 1px;
+}
+.step-body { flex: 1; }
+.step-title { font-size: 0.86rem; font-weight: 600; color: #e2e8f0; margin-bottom: 2px; }
+.step-desc  { font-size: 0.78rem; color: #64748b; line-height: 1.5; }
+.step-desc strong { color: #94a3b8; }
+
+/* ---- Settings table ---- */
+.settings-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 8px; }
+.settings-table th { text-align: left; padding: 5px 8px; color: #475569; font-weight: 600; border-bottom: 1px solid #252840; }
+.settings-table td { padding: 6px 8px; border-bottom: 1px solid #1c1f30; color: #cbd5e1; vertical-align: top; }
+.settings-table td:first-child { font-family: monospace; color: #a5b4fc; font-size: 0.76rem; white-space: nowrap; }
+.settings-table tr:last-child td { border-bottom: none; }
+
+/* ---- Notice ---- */
+.notice {
+  background: rgba(99,102,241,0.10); border: 1px solid rgba(99,102,241,0.22);
+  border-radius: 8px; padding: 10px 13px; font-size: 0.8rem; color: #a5b4fc;
+  margin-top: 12px; line-height: 1.55;
+}
+
+/* ---- Left column stacking ---- */
+.left-col { display: flex; flex-direction: column; gap: 16px; }
+/* ---- Right column stacking ---- */
+.right-col { display: flex; flex-direction: column; gap: 16px; }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<!-- ====== PAGE HEADER ====== -->
+<div class="page-header">
+  <div class="page-header-left">
+    <div>
+      <h1>🎵 Now Playing Widget</h1>
+      <p>Setup-Assistent für StreamElements &amp; OBS</p>
+    </div>
+  </div>
+  <span class="badge">v1.3</span>
+</div>
+
+<!-- ====== LIVE PREVIEW HERO ====== -->
+<div class="preview-hero">
+  <div class="preview-hero-label">Live-Vorschau · Beispieldaten</div>
+  <div class="preview-iframe-wrap">
+    <iframe id="preview-frame" title="Widget Vorschau" scrolling="no"></iframe>
+  </div>
+</div>
+
+<!-- ====== SETUP GRID ====== -->
+<div class="setup-grid">
+
+  <!-- ====== LEFT COLUMN ====== -->
+  <div class="left-col">
+
+    <!-- ① Last.fm Zugangsdaten -->
+    <div class="card">
+      <div class="section-heading">
+        <div class="section-num">1</div>
+        <div class="section-title">Last.fm Zugangsdaten</div>
+      </div>
+      <div class="field">
+        <label>Benutzername</label>
+        <input type="text" id="inp-user" placeholder="dein_lastfm_name" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>API Key</label>
+        <input type="text" id="inp-key" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+        <div class="field-hint"><a href="https://www.last.fm/api/account/create" target="_blank">→ Kostenlosen API Key erstellen</a></div>
+      </div>
+      <button class="btn btn-secondary" id="btn-copy-url" onclick="generateConfigUrl()" style="width:100%;margin-top:4px;justify-content:center;font-size:0.8rem">
+        🔗 Konfig-Link generieren &amp; kopieren
+      </button>
+      <p style="margin-top:6px;font-size:0.72rem;color:#334155;line-height:1.4">Tipp: Link enthält alle Einstellungen — perfekt um vorkonfigurierte Setups für Kunden zu teilen (benötigt Webserver).</p>
+    </div>
+
+    <!-- ② Design-Einstellungen -->
+    <div class="card">
+      <div class="section-heading">
+        <div class="section-num">2</div>
+        <div class="section-title">Design-Einstellungen</div>
+      </div>
+
+      <div class="field">
+        <label>Theme</label>
+        <select id="sel-theme">
+          <option value="dark">Dark (Standard)</option>
+          <option value="frosted">Frosted Glass</option>
+          <option value="liquid">Liquid Glass ✨</option>
+          <option value="neon">Neon</option>
+          <option value="light">Light</option>
+          <option value="minimal">Minimal</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Widget Form</label>
+        <select id="sel-shape">
+          <option value="default">Rund (Standard)</option>
+          <option value="pill">Pille</option>
+          <option value="sharp">Eckig</option>
+          <option value="square">Quadratisch</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Schriftgröße</label>
+        <select id="sel-fontsize">
+          <option value="small">Klein</option>
+          <option value="medium" selected>Mittel</option>
+          <option value="large">Groß</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Einblend-Animation</label>
+        <select id="sel-anim">
+          <option value="ios">iOS Notification ✦ (Standard)</option>
+          <option value="fade">Sanftes Einblenden</option>
+          <option value="slide-left">Von links einfahren</option>
+          <option value="slide-right">Von rechts einfahren</option>
+          <option value="scale">Aufpoppen</option>
+          <option value="slide-bottom">Von unten einfahren</option>
+        </select>
+      </div>
+
+      <hr class="card-divider">
+
+      <div class="toggle-group">
+        <div class="toggle-row">
+          <span>EQ-Balken anzeigen</span>
+          <input type="checkbox" id="chk-bars" checked>
+        </div>
+        <div class="toggle-row">
+          <span>"Now Playing" Label</span>
+          <input type="checkbox" id="chk-label" checked>
+        </div>
+        <div class="toggle-row">
+          <span>Album-Name anzeigen</span>
+          <input type="checkbox" id="chk-album" checked>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ====== RIGHT COLUMN ====== -->
+  <div class="right-col">
+
+    <!-- ③ Widget-Code -->
+    <div class="card">
+      <div class="section-heading">
+        <div class="section-num">3</div>
+        <div class="section-title">Widget-Code in StreamElements einfügen</div>
+      </div>
+      <p style="margin-bottom:13px;font-size:0.82rem">Kopiere jeden Tab-Inhalt in den passenden Tab im StreamElements Widget-Editor.</p>
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('html',this)">HTML</button>
+        <button class="tab-btn"        onclick="switchTab('css',this)">CSS</button>
+        <button class="tab-btn"        onclick="switchTab('js',this)">JS</button>
+        <button class="tab-btn"        onclick="switchTab('fields',this)">Fields</button>
+      </div>
+
+      <div id="tab-html" class="tab-pane active">
+        <div class="code-wrap">
+          <button class="copy-btn" onclick="copyTab('html')">Kopieren</button>
+          <pre id="code-html"></pre>
+        </div>
+      </div>
+      <div id="tab-css" class="tab-pane">
+        <div class="code-wrap">
+          <button class="copy-btn" onclick="copyTab('css')">Kopieren</button>
+          <pre id="code-css"></pre>
+        </div>
+      </div>
+      <div id="tab-js" class="tab-pane">
+        <div class="code-wrap">
+          <button class="copy-btn" onclick="copyTab('js')">Kopieren</button>
+          <pre id="code-js"></pre>
+        </div>
+      </div>
+      <div id="tab-fields" class="tab-pane">
+        <div class="code-wrap">
+          <button class="copy-btn" onclick="copyTab('fields')">Kopieren</button>
+          <pre id="code-fields"></pre>
+        </div>
+        <div class="notice">Fields JSON im <strong>Fields</strong>-Tab in StreamElements einfügen. <strong>DATA-Tab bleibt leer.</strong></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="downloadAll()">⬇ Alle 4 Dateien herunterladen</button>
+      </div>
+    </div>
+
+    <!-- ④ Einrichtungsschritte -->
+    <div class="card">
+      <div class="section-heading">
+        <div class="section-num">4</div>
+        <div class="section-title">Einrichtung in StreamElements &amp; OBS</div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-body">
+            <div class="step-title">Custom Widget anlegen</div>
+            <div class="step-desc">StreamElements → My Overlays → Edit → <strong>Add Widget → Custom Widget</strong></div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-body">
+            <div class="step-title">HTML, CSS &amp; JS einfügen</div>
+            <div class="step-desc">Jeden Code-Block oben (Tab ③) kopieren &amp; in den passenden Tab einfügen.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-body">
+            <div class="step-title">Fields JSON einfügen</div>
+            <div class="step-desc">Fields-Tab oben kopieren &amp; im <strong>Fields-Tab</strong> in StreamElements einfügen.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-body">
+            <div class="step-title">Overlay-URL in OBS einbinden</div>
+            <div class="step-desc">StreamElements → Launch → URL kopieren → OBS Browser Source. Breite: <strong>400</strong>, Höhe: <strong>120</strong>.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-body">
+            <div class="step-title">Musik abspielen &amp; fertig ✓</div>
+            <div class="step-desc">Song starten → Widget erscheint als iPhone-Notification auf dem Stream.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================
+     EMBEDDED WIDGET CODE (no server needed)
+     ============================================================ -->
+
+<script type="text/plain" id="embed-html"><!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Now Playing</title>
+  <style>{{CSS}}</style>
+</head>
+<body>
+  <div class="np-card np-hidden" id="np-card">
+    <div class="np-art-wrap">
+      <img id="np-art"      src="" alt="Album Art">
+      <img id="np-art-next" src="" alt="">
+    </div>
+    <div class="np-info">
+      <div class="np-status" id="np-status">
+        <div class="np-bars" id="np-bars">
+          <div class="np-bar"></div>
+          <div class="np-bar"></div>
+          <div class="np-bar"></div>
+          <div class="np-bar"></div>
+        </div>
+        <span class="np-now-label" id="np-now-label">Now Playing</span>
+      </div>
+      <div class="np-track"  id="np-track"></div>
+      <div class="np-artist" id="np-artist"></div>
+      <div class="np-album"  id="np-album"></div>
+      <div class="np-progress-wrap">
+        <div class="np-progress-bar">
+          <div class="np-progress-fill" id="np-progress-fill"></div>
+        </div>
+        <span class="np-time" id="np-time"></span>
+      </div>
+    </div>
+  </div>
+  <script>{{JS}}<\/script>
+</body>
+</html></script>
+
+<script type="text/plain" id="embed-css">/* ============================================================
+   NOW PLAYING WIDGET — Frosted Glass / Kindle Style
+   StreamElements Custom Widget CSS
+   ============================================================ */
+
+/* ---------- CSS Custom Properties (theme contract) ---------- */
+:root {
+  --np-width:        400px;
+  --np-radius:       18px;
+  --np-blur:         28px;
+  --np-padding:      14px 16px;
+  --np-gap:          14px;
+  --np-art-size:     72px;
+
+  --np-bg:           rgba(10, 10, 20, 0.72);
+  --np-border:       rgba(255,255,255,0.10);
+  --np-shadow:       0 8px 40px rgba(0,0,0,0.55);
+
+  --np-font:         'Inter', 'Segoe UI', sans-serif;
+  --np-track-color:  #ffffff;
+  --np-artist-color: rgba(255,255,255,0.75);
+  --np-album-color:  rgba(255,255,255,0.45);
+  --np-track-size:   15px;
+  --np-artist-size:  13px;
+  --np-album-size:   11px;
+
+  --np-progress-h:   3px;
+  --np-progress-bg:  rgba(255,255,255,0.15);
+  --np-progress-fill:#1db954;
+
+  --np-viz-color:    rgba(255,255,255,0.55);
+  --np-transition-ms:500;
+
+  --np-body-bg:      transparent;
+}
+
+/* ---------- Reset / Base ---------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--np-body-bg);
+  font-family: var(--np-font);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* ---------- Card ---------- */
+.np-card {
+  display: flex;
+  align-items: center;
+  gap: var(--np-gap);
+  width: var(--np-width);
+  padding: var(--np-padding);
+  background: var(--np-bg);
+  backdrop-filter: blur(var(--np-blur)) saturate(180%) brightness(108%);
+  -webkit-backdrop-filter: blur(var(--np-blur)) saturate(180%) brightness(108%);
+  border-radius: var(--np-radius);
+  border: 1px solid var(--np-border);
+  box-shadow:
+    var(--np-shadow),
+    inset 0 1px 0 rgba(255,255,255,0.13),
+    inset 0 -1px 0 rgba(0,0,0,0.18);
+  will-change: transform, opacity;
+  position: relative;
+  overflow: hidden;
+}
+
+.np-card.np-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------- iPhone-style notification animations ---------- */
+@keyframes np-notify-in {
+  0%   { transform: translateY(-120%) scale(0.92); opacity: 0; }
+  45%  { opacity: 1; }
+  62%  { transform: translateY(10px)  scale(1.02); }
+  78%  { transform: translateY(-5px)  scale(0.99); }
+  90%  { transform: translateY(2px)   scale(1.005); }
+  100% { transform: translateY(0)     scale(1); opacity: 1; }
+}
+
+@keyframes np-notify-out {
+  0%   { transform: translateY(0)     scale(1);    opacity: 1; }
+  25%  { transform: translateY(6px)   scale(0.98); opacity: 1; }
+  100% { transform: translateY(-115%) scale(0.92); opacity: 0; }
+}
+
+@keyframes np-track-bump {
+  0%   { transform: translateY(0);  }
+  28%  { transform: translateY(-9px) scale(0.97); }
+  58%  { transform: translateY(4px)  scale(1.01); }
+  80%  { transform: translateY(-2px); }
+  100% { transform: translateY(0);  }
+}
+
+.np-card.np-notify-in  { animation: np-notify-in  0.62s cubic-bezier(0.34, 1.3, 0.64, 1) forwards; }
+.np-card.np-notify-out { animation: np-notify-out 0.38s cubic-bezier(0.55, 0, 0.8, 1) forwards; }
+.np-card.np-track-bump { animation: np-track-bump 0.42s cubic-bezier(0.34, 1.2, 0.64, 1); }
+
+/* ---------- Additional animation keyframes ---------- */
+@keyframes np-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes np-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes np-slide-left-in {
+  0%   { transform: translateX(-115%) scale(0.94); opacity: 0; }
+  55%  { transform: translateX(8px)   scale(1.01); opacity: 1; }
+  78%  { transform: translateX(-3px)  scale(0.99); }
+  100% { transform: translateX(0)     scale(1);    opacity: 1; }
+}
+@keyframes np-slide-left-out {
+  0%   { transform: translateX(0)      scale(1);    opacity: 1; }
+  25%  { transform: translateX(8px)    scale(0.98); opacity: 1; }
+  100% { transform: translateX(-115%)  scale(0.94); opacity: 0; }
+}
+@keyframes np-slide-right-in {
+  0%   { transform: translateX(115%)  scale(0.94); opacity: 0; }
+  55%  { transform: translateX(-8px)  scale(1.01); opacity: 1; }
+  78%  { transform: translateX(3px)   scale(0.99); }
+  100% { transform: translateX(0)     scale(1);    opacity: 1; }
+}
+@keyframes np-slide-right-out {
+  0%   { transform: translateX(0)      scale(1);    opacity: 1; }
+  25%  { transform: translateX(-8px)   scale(0.98); opacity: 1; }
+  100% { transform: translateX(115%)   scale(0.94); opacity: 0; }
+}
+@keyframes np-scale-in {
+  0%   { transform: scale(0.70); opacity: 0; }
+  62%  { transform: scale(1.05); opacity: 1; }
+  80%  { transform: scale(0.97); }
+  100% { transform: scale(1);    opacity: 1; }
+}
+@keyframes np-scale-out {
+  0%   { transform: scale(1);    opacity: 1; }
+  28%  { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(0.70); opacity: 0; }
+}
+@keyframes np-slide-bottom-in {
+  0%   { transform: translateY(115%)  scale(0.94); opacity: 0; }
+  55%  { transform: translateY(-8px)  scale(1.01); opacity: 1; }
+  78%  { transform: translateY(3px)   scale(0.99); }
+  100% { transform: translateY(0)     scale(1);    opacity: 1; }
+}
+@keyframes np-slide-bottom-out {
+  0%   { transform: translateY(0)     scale(1);    opacity: 1; }
+  25%  { transform: translateY(-8px)  scale(0.98); opacity: 1; }
+  100% { transform: translateY(115%)  scale(0.94); opacity: 0; }
+}
+
+/* Override default animation when a specific anim class is active */
+.np-anim-fade.np-notify-in          { animation: np-fade-in          0.45s ease                          forwards; }
+.np-anim-fade.np-notify-out         { animation: np-fade-out         0.35s ease                          forwards; }
+.np-anim-slide-left.np-notify-in    { animation: np-slide-left-in    0.52s cubic-bezier(0.34,1.2,0.64,1) forwards; }
+.np-anim-slide-left.np-notify-out   { animation: np-slide-left-out   0.36s cubic-bezier(0.55,0,0.8,1)    forwards; }
+.np-anim-slide-right.np-notify-in   { animation: np-slide-right-in   0.52s cubic-bezier(0.34,1.2,0.64,1) forwards; }
+.np-anim-slide-right.np-notify-out  { animation: np-slide-right-out  0.36s cubic-bezier(0.55,0,0.8,1)    forwards; }
+.np-anim-scale.np-notify-in         { animation: np-scale-in         0.48s cubic-bezier(0.34,1.3,0.64,1) forwards; }
+.np-anim-scale.np-notify-out        { animation: np-scale-out        0.32s cubic-bezier(0.55,0,0.8,1)    forwards; }
+.np-anim-slide-bottom.np-notify-in  { animation: np-slide-bottom-in  0.52s cubic-bezier(0.34,1.2,0.64,1) forwards; }
+.np-anim-slide-bottom.np-notify-out { animation: np-slide-bottom-out 0.36s cubic-bezier(0.55,0,0.8,1)    forwards; }
+
+/* ---------- Album Art ---------- */
+.np-art-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: var(--np-art-size);
+  height: var(--np-art-size);
+  border-radius: calc(var(--np-radius) - 4px);
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+}
+
+.np-art-wrap img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+#np-art-next {
+  opacity: 0;
+  z-index: 1;
+}
+
+/* ---------- Info block ---------- */
+.np-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.np-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.np-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+
+.np-bar {
+  width: 3px;
+  background: var(--np-viz-color);
+  border-radius: 2px;
+  animation: np-bar-bounce 0.8s ease-in-out infinite alternate;
+  transform-origin: bottom;
+}
+.np-bar:nth-child(1) { animation-duration: 0.72s; animation-delay: 0s;    height: 60%; }
+.np-bar:nth-child(2) { animation-duration: 0.60s; animation-delay: 0.1s;  height: 100%; }
+.np-bar:nth-child(3) { animation-duration: 0.85s; animation-delay: 0.05s; height: 80%; }
+.np-bar:nth-child(4) { animation-duration: 0.65s; animation-delay: 0.15s; height: 50%; }
+
+@keyframes np-bar-bounce {
+  0%   { transform: scaleY(0.25); }
+  100% { transform: scaleY(1); }
+}
+
+.np-card.np-paused .np-bar {
+  animation-play-state: paused;
+  transform: scaleY(0.25);
+}
+
+.np-now-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--np-progress-fill);
+  opacity: 0.9;
+}
+
+.np-track {
+  font-size: var(--np-track-size);
+  font-weight: 600;
+  color: var(--np-track-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.np-artist {
+  font-size: var(--np-artist-size);
+  color: var(--np-artist-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.np-album {
+  font-size: var(--np-album-size);
+  color: var(--np-album-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Progress bar ---------- */
+.np-progress-wrap {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.np-progress-bar {
+  flex: 1;
+  height: var(--np-progress-h);
+  background: var(--np-progress-bg);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.np-progress-fill {
+  height: 100%;
+  background: var(--np-progress-fill);
+  border-radius: 99px;
+  width: 0%;
+  transition: width 1s linear;
+}
+
+.np-time {
+  font-size: 9px;
+  color: var(--np-album-color);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Preset Themes ---------- */
+.np-theme-light {
+  --np-bg:           rgba(255,255,255,0.68);
+  --np-border:       rgba(0,0,0,0.08);
+  --np-shadow:       0 8px 40px rgba(0,0,0,0.18);
+  --np-track-color:  #111111;
+  --np-artist-color: rgba(0,0,0,0.65);
+  --np-album-color:  rgba(0,0,0,0.40);
+  --np-progress-bg:  rgba(0,0,0,0.12);
+  --np-viz-color:    rgba(0,0,0,0.45);
+}
+
+.np-theme-minimal {
+  --np-bg:           rgba(0,0,0,0.45);
+  --np-blur:         8px;
+  --np-border:       transparent;
+  --np-shadow:       none;
+  --np-radius:       8px;
+}
+
+.np-theme-neon {
+  --np-bg:           rgba(5, 0, 20, 0.80);
+  --np-border:       rgba(120, 40, 255, 0.45);
+  --np-progress-fill:#a855f7;
+  --np-viz-color:    rgba(168, 85, 247, 0.75);
+}
+
+.np-theme-frosted {
+  --np-bg:           rgba(22, 18, 35, 0.70);
+  --np-blur:         32px;
+  --np-border:       rgba(255, 240, 210, 0.13);
+  --np-shadow:       0 8px 40px rgba(0,0,0,0.60);
+  --np-track-color:  #f5f0ff;
+  --np-artist-color: rgba(235,220,255,0.78);
+  --np-album-color:  rgba(210,195,240,0.50);
+  --np-progress-fill:#c4a0ff;
+  --np-viz-color:    rgba(200,180,255,0.60);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.60),
+    inset 0 1.5px 0 rgba(255,245,220,0.18), inset 0 -1px 0 rgba(150,100,255,0.12);
+}
+
+.np-theme-liquid {
+  --np-bg:           rgba(255, 255, 255, 0.14);
+  --np-blur:         48px;
+  --np-border:       rgba(255, 255, 255, 0.32);
+  --np-shadow:       0 8px 48px rgba(120,80,255,0.22), 0 2px 12px rgba(0,0,0,0.22);
+  --np-track-color:  #ffffff;
+  --np-artist-color: rgba(255,255,255,0.85);
+  --np-album-color:  rgba(255,255,255,0.58);
+  --np-progress-bg:  rgba(255,255,255,0.20);
+  --np-progress-fill:#e8d5ff;
+  --np-viz-color:    rgba(255,255,255,0.80);
+  backdrop-filter: blur(48px) saturate(240%) brightness(128%) contrast(102%);
+  -webkit-backdrop-filter: blur(48px) saturate(240%) brightness(128%) contrast(102%);
+  box-shadow: 0 8px 48px rgba(120,80,255,0.22), 0 2px 12px rgba(0,0,0,0.22),
+    inset 0 1.5px 0 rgba(255,255,255,0.55), inset 0 -1px 0 rgba(200,180,255,0.18);
+}
+.np-theme-liquid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(138deg,
+    rgba(255,255,255,0.28) 0%, rgba(190,140,255,0.10) 28%,
+    rgba(80,210,255,0.09) 56%, rgba(255,220,180,0.07) 80%,
+    rgba(255,255,255,0.04) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+.np-theme-liquid .np-art-wrap,
+.np-theme-liquid .np-info { position: relative; z-index: 1; }
+</script>
+
+<script type="text/plain" id="embed-js">'use strict';
+
+var fields = {
+  lastfm_user:   '',
+  lastfm_key:    '',
+  theme:         'dark',
+  shape:         'default',
+  animation:     'ios',
+  show_album:    true,
+  show_bars:     true,
+  show_label:    true,
+  font_size:     'medium',
+  custom_width:  0,
+  custom_radius: 0,
+  custom_blur:   0
+};
+
+var DEFAULT_ART = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"%3E%3Crect width="72" height="72" fill="%23222"%2F%3E%3Ccircle cx="36" cy="36" r="14" fill="%23444"%2F%3E%3Ccircle cx="36" cy="36" r="5" fill="%23222"%2F%3E%3C%2Fsvg%3E';
+
+var lastTrackId  = null;
+var lastArtUrl   = null;
+var progressMs   = 0;
+var durationMs   = 0;
+var isPlaying    = false;
+var cardVisible  = false;
+var progressInterval = null;
+
+var root     = document.documentElement;
+var cardEl   = document.getElementById('np-card');
+var trackEl  = document.getElementById('np-track');
+var artistEl = document.getElementById('np-artist');
+var albumEl  = document.getElementById('np-album');
+var artEl    = document.getElementById('np-art');
+var artNextEl= document.getElementById('np-art-next');
+var fillEl   = document.getElementById('np-progress-fill');
+var timeEl   = document.getElementById('np-time');
+var barsEl   = document.getElementById('np-bars');
+var labelEl  = document.getElementById('np-now-label');
+var statusEl = document.getElementById('np-status');
+
+function fmt(ms) {
+  if (!ms || isNaN(ms)) return '';
+  var s = Math.floor(ms / 1000), m = Math.floor(s / 60);
+  s = s % 60;
+  return m + ':' + (s < 10 ? '0' : '') + s;
+}
+function fieldBool(key, def) {
+  var v = fields[key];
+  if (v === undefined || v === null) return def;
+  return v === true || v === 'true';
+}
+function setOrReset(prop, val) {
+  var n = parseFloat(val);
+  if (n > 0) { root.style.setProperty(prop, n + 'px'); }
+  else        { root.style.removeProperty(prop); }
+}
+
+function applyAppearance() {
+  cardEl.classList.remove('np-theme-dark','np-theme-frosted','np-theme-light','np-theme-minimal','np-theme-neon','np-theme-liquid');
+  if (fields.theme && fields.theme !== 'dark') cardEl.classList.add('np-theme-' + fields.theme);
+  cardEl.classList.remove('np-anim-fade','np-anim-slide-left','np-anim-slide-right','np-anim-scale','np-anim-slide-bottom');
+  if (fields.animation && fields.animation !== 'ios') cardEl.classList.add('np-anim-' + fields.animation);
+  setOrReset('--np-width', fields.custom_width);
+  setOrReset('--np-blur',  fields.custom_blur);
+  var customR = parseFloat(fields.custom_radius);
+  if (customR > 0) {
+    root.style.setProperty('--np-radius', customR + 'px');
+  } else {
+    var shapeMap = { pill: '60px', sharp: '6px', square: '0px' };
+    var sr = shapeMap[fields.shape];
+    if (sr) { root.style.setProperty('--np-radius', sr); }
+    else     { root.style.removeProperty('--np-radius'); }
+  }
+  if (albumEl)  albumEl.style.display  = fieldBool('show_album', true) ? '' : 'none';
+  if (barsEl)   barsEl.style.display   = fieldBool('show_bars',  true) ? '' : 'none';
+  if (labelEl)  labelEl.style.display  = fieldBool('show_label', true) ? '' : 'none';
+  if (statusEl) statusEl.style.display = (fieldBool('show_bars', true) || fieldBool('show_label', true)) ? '' : 'none';
+  var fsMap = { small: '12px', medium: '15px', large: '18px' };
+  var fs = fsMap[fields.font_size];
+  if (fs) {
+    root.style.setProperty('--np-track-size',  fs);
+    root.style.setProperty('--np-artist-size', (parseInt(fs) - 3) + 'px');
+    root.style.setProperty('--np-album-size',  (parseInt(fs) - 5) + 'px');
+  }
+}
+
+function removeAnimClasses() {
+  cardEl.classList.remove('np-notify-in', 'np-notify-out', 'np-track-bump');
+}
+function showCard() {
+  if (cardVisible) return;
+  cardVisible = true;
+  removeAnimClasses();
+  cardEl.classList.remove('np-hidden');
+  void cardEl.offsetWidth;
+  cardEl.classList.add('np-notify-in');
+  cardEl.addEventListener('animationend', function onIn() {
+    cardEl.removeEventListener('animationend', onIn);
+    cardEl.classList.remove('np-notify-in');
+  });
+}
+function hideCard() {
+  if (!cardVisible) return;
+  cardVisible = false;
+  removeAnimClasses();
+  void cardEl.offsetWidth;
+  cardEl.classList.add('np-notify-out');
+  cardEl.addEventListener('animationend', function onOut() {
+    cardEl.removeEventListener('animationend', onOut);
+    cardEl.classList.remove('np-notify-out');
+    cardEl.classList.add('np-hidden');
+  });
+}
+function bumpTrack() {
+  removeAnimClasses();
+  void cardEl.offsetWidth;
+  cardEl.classList.add('np-track-bump');
+  cardEl.addEventListener('animationend', function onBump() {
+    cardEl.removeEventListener('animationend', onBump);
+    cardEl.classList.remove('np-track-bump');
+  });
+}
+
+function crossfadeArt(newUrl) {
+  if (!newUrl) newUrl = DEFAULT_ART;
+  if (newUrl === lastArtUrl) return;
+  lastArtUrl = newUrl;
+  if (!artEl) return;
+  var preload = new Image();
+  preload.onload = function () {
+    if (!artNextEl) { artEl.src = newUrl; return; }
+    artNextEl.style.transition = 'opacity 0s';
+    artNextEl.style.opacity    = '0';
+    artNextEl.src              = newUrl;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        artNextEl.style.transition = 'opacity 0.5s ease';
+        artNextEl.style.opacity    = '1';
+        setTimeout(function () {
+          artEl.src = newUrl;
+          artNextEl.style.transition = 'opacity 0s';
+          artNextEl.style.opacity    = '0';
+        }, 520);
+      });
+    });
+  };
+  preload.onerror = function () { artEl.src = DEFAULT_ART; lastArtUrl = DEFAULT_ART; };
+  preload.src = newUrl;
+}
+
+function startProgress() {
+  if (progressInterval) clearInterval(progressInterval);
+  if (!isPlaying) return;
+  progressInterval = setInterval(function () {
+    progressMs += 1000;
+    if (durationMs > 0 && progressMs > durationMs) progressMs = durationMs;
+    renderProgress();
+  }, 1000);
+}
+function renderProgress() {
+  if (!fillEl) return;
+  var pct = (durationMs > 0) ? (progressMs / durationMs * 100) : 0;
+  fillEl.style.width = Math.min(100, pct) + '%';
+  if (timeEl) timeEl.textContent = durationMs > 0 ? fmt(progressMs) + ' / ' + fmt(durationMs) : fmt(progressMs);
+}
+
+function showTrack(data) {
+  var trackId = (data.artist || '') + '|' + (data.title || '');
+  var isNew   = (trackId !== lastTrackId);
+  if (trackEl)  trackEl.textContent  = data.title  || '';
+  if (artistEl) artistEl.textContent = data.artist || '';
+  if (albumEl)  albumEl.textContent  = data.album  || '';
+  isPlaying  = !!data.isPlaying;
+  if (cardEl) { isPlaying ? cardEl.classList.remove('np-paused') : cardEl.classList.add('np-paused'); }
+  progressMs = data.progressMs || 0;
+  durationMs = data.durationMs || 0;
+  renderProgress();
+  startProgress();
+  if (!cardVisible) {
+    lastTrackId = trackId;
+    crossfadeArt(data.artUrl);
+    showCard();
+  } else if (isNew) {
+    lastTrackId = trackId;
+    crossfadeArt(data.artUrl);
+    bumpTrack();
+  } else {
+    crossfadeArt(data.artUrl);
+  }
+}
+
+function pollLastFm() {
+  var user = fields.lastfm_user, key = fields.lastfm_key;
+  if (!user || !key) return;
+  var url = 'https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks'
+    + '&user=' + encodeURIComponent(user)
+    + '&api_key=' + encodeURIComponent(key)
+    + '&format=json&limit=1';
+  fetch(url)
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data.error) {
+        if (trackEl)  trackEl.textContent  = 'Last.fm Error ' + data.error;
+        if (artistEl) artistEl.textContent = data.message || '';
+        if (albumEl)  albumEl.textContent  = '';
+        showCard(); return;
+      }
+      var tracks = data.recenttracks && data.recenttracks.track;
+      if (!tracks) { hideCard(); return; }
+      var track = Array.isArray(tracks) ? tracks[0] : tracks;
+      if (!track) { hideCard(); return; }
+      var isNow = !!(track['@attr'] && track['@attr'].nowplaying === 'true');
+      var isRecent = false;
+      if (!isNow && track.date && track.date.uts) {
+        var age = Math.floor(Date.now() / 1000) - parseInt(track.date.uts, 10);
+        isRecent = age >= 0 && age < 480;
+      }
+      if (!isNow && !isRecent) { hideCard(); return; }
+      var artUrl = '';
+      if (track.image && track.image.length) {
+        for (var i = track.image.length - 1; i >= 0; i--) {
+          if (track.image[i]['#text']) { artUrl = track.image[i]['#text']; break; }
+        }
+      }
+      showTrack({
+        title:      track.name || '',
+        artist:     (track.artist && (track.artist['#text'] || track.artist.name)) || '',
+        album:      (track.album && track.album['#text']) || '',
+        artUrl:     artUrl,
+        isPlaying:  isNow,
+        progressMs: 0,
+        durationMs: 0
+      });
+    })
+    .catch(function (e) { console.error('[NP]', e); });
+}
+
+window.addEventListener('onWidgetLoad', function (e) {
+  window.__np_started = true;
+  var d = e.detail || {};
+  fields = Object.assign(fields, d.fieldData || {});
+  applyAppearance();
+  if (artEl) artEl.src = DEFAULT_ART;
+  if (fields.lastfm_user && fields.lastfm_key) {
+    pollLastFm();
+    setInterval(pollLastFm, 5000);
+  }
+});
+
+window.addEventListener('onSessionUpdate', function (e) {
+  var d = e.detail || {};
+  if (d.fieldData) { fields = Object.assign(fields, d.fieldData); applyAppearance(); }
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+  setTimeout(function () {
+    if (window.__np_started) return;
+    applyAppearance();
+    if (artEl) artEl.src = DEFAULT_ART;
+    if (fields.lastfm_user && fields.lastfm_key) {
+      pollLastFm();
+      setInterval(pollLastFm, 5000);
+    }
+  }, 1500);
+});
+</script>
+
+<script>
+/* ============================================================
+   INSTALLER LOGIC
+   ============================================================ */
+
+var cachedCSS    = null;
+var cachedJS     = null;
+var codeStore    = {};
+
+/* Inject entered credentials + shape into JS source */
+function buildInjectedJS() {
+  if (!cachedJS) return '';
+  var user  = (document.getElementById('inp-user').value  || '').trim();
+  var key   = (document.getElementById('inp-key').value   || '').trim();
+  var shape = document.getElementById('sel-shape').value  || 'default';
+  var anim  = document.getElementById('sel-anim').value   || 'ios';
+  var js = cachedJS;
+  js = js.replace("lastfm_user:   ''", "lastfm_user:   '" + user.replace(/'/g,"\\'") + "'");
+  js = js.replace("lastfm_key:    ''", "lastfm_key:    '" + key.replace(/'/g,"\\'")  + "'");
+  js = js.replace("shape:         'default'", "shape:         '" + shape + "'");
+  js = js.replace("animation:     'ios'",     "animation:     '" + anim  + "'");
+  return js;
+}
+
+function rebuildCode() {
+  if (!cachedCSS || !cachedJS) return;
+  codeStore.js     = buildInjectedJS();
+  codeStore.fields = buildFieldsJson();
+  document.getElementById('code-js').textContent     = codeStore.js;
+  document.getElementById('code-fields').textContent = codeStore.fields;
+  buildPreview();
+}
+
+/* Load files via fetch (when served), fallback to embedded */
+function loadFiles() {
+  var tryFetch = function (url) {
+    return fetch(url + '?_=' + Date.now())
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      });
+  };
+
+  Promise.all([
+    tryFetch('widget.css').catch(function () { return null; }),
+    tryFetch('widget.js').catch(function () { return null; })
+  ]).then(function (results) {
+    cachedCSS = results[0] || document.getElementById('embed-css').textContent.trim();
+    cachedJS  = results[1] || document.getElementById('embed-js').textContent.trim();
+
+    codeStore.html   = buildStandaloneHTML();
+    codeStore.css    = cachedCSS;
+    codeStore.js     = buildInjectedJS();
+    codeStore.fields = buildFieldsJson();
+
+    document.getElementById('code-html').textContent   = codeStore.html;
+    document.getElementById('code-css').textContent    = codeStore.css;
+    document.getElementById('code-js').textContent     = codeStore.js;
+    document.getElementById('code-fields').textContent = codeStore.fields;
+
+    buildPreview();
+  });
+}
+
+function buildStandaloneHTML() {
+  return '<!DOCTYPE html>\n'
+    + '<html lang="de">\n<head>\n'
+    + '  <meta charset="UTF-8">\n'
+    + '  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
+    + '  <title>Now Playing</title>\n'
+    + '  <link rel="stylesheet" href="widget.css">\n'
+    + '</head>\n<body>\n'
+    + '  <div class="np-card np-hidden" id="np-card">\n'
+    + '    <div class="np-art-wrap">\n'
+    + '      <img id="np-art" src="" alt="Album Art">\n'
+    + '      <img id="np-art-next" src="" alt="">\n'
+    + '    </div>\n'
+    + '    <div class="np-info">\n'
+    + '      <div class="np-status" id="np-status">\n'
+    + '        <div class="np-bars" id="np-bars">\n'
+    + '          <div class="np-bar"></div><div class="np-bar"></div>\n'
+    + '          <div class="np-bar"></div><div class="np-bar"></div>\n'
+    + '        </div>\n'
+    + '        <span class="np-now-label" id="np-now-label">Now Playing</span>\n'
+    + '      </div>\n'
+    + '      <div class="np-track" id="np-track"></div>\n'
+    + '      <div class="np-artist" id="np-artist"></div>\n'
+    + '      <div class="np-album" id="np-album"></div>\n'
+    + '      <div class="np-progress-wrap">\n'
+    + '        <div class="np-progress-bar"><div class="np-progress-fill" id="np-progress-fill"></div></div>\n'
+    + '        <span class="np-time" id="np-time"></span>\n'
+    + '      </div>\n'
+    + '    </div>\n'
+    + '  </div>\n'
+    + '  <script src="widget.js"><\/script>\n'
+    + '</body>\n</html>';
+}
+
+function buildFieldsJson() {
+  var user  = (document.getElementById('inp-user').value  || '').trim();
+  var key   = (document.getElementById('inp-key').value   || '').trim();
+  var theme = document.getElementById('sel-theme').value  || 'dark';
+  var shape = document.getElementById('sel-shape').value  || 'default';
+  var anim  = document.getElementById('sel-anim').value   || 'ios';
+  var fs    = document.getElementById('sel-fontsize').value || 'medium';
+  return JSON.stringify([
+    { name: 'lastfm_user',   type: 'text',     label: 'Last.fm Benutzername',          value: user },
+    { name: 'lastfm_key',    type: 'text',     label: 'Last.fm API Key',                value: key  },
+    { name: 'theme',         type: 'dropdown', label: 'Design / Theme',                 value: theme,
+      options: { dark: 'Dark (Standard)', frosted: 'Frosted Glass', light: 'Light', minimal: 'Minimal', neon: 'Neon', liquid: 'Liquid Glass' } },
+    { name: 'shape',         type: 'dropdown', label: 'Widget Form',                    value: shape,
+      options: { default: 'Rund (Standard)', pill: 'Pille', sharp: 'Eckig', square: 'Quadratisch' } },
+    { name: 'animation',     type: 'dropdown', label: 'Einblend-Animation',             value: anim,
+      options: { ios: 'iOS Notification ✦', fade: 'Sanftes Einblenden', 'slide-left': 'Von links', 'slide-right': 'Von rechts', scale: 'Aufpoppen', 'slide-bottom': 'Von unten' } },
+    { name: 'font_size',     type: 'dropdown', label: 'Schriftgröße',                   value: fs,
+      options: { small: 'Klein', medium: 'Mittel', large: 'Groß' } },
+    { name: 'show_bars',     type: 'checkbox', label: 'EQ-Balken anzeigen',             value: true },
+    { name: 'show_label',    type: 'checkbox', label: '"Now Playing" Label anzeigen',   value: true },
+    { name: 'show_album',    type: 'checkbox', label: 'Album anzeigen',                 value: true },
+    { name: 'custom_width',  type: 'number',   label: 'Breite (px, 0 = Standard)',      value: 0 },
+    { name: 'custom_radius', type: 'number',   label: 'Eckenradius (px, 0 = Standard)', value: 0 },
+    { name: 'custom_blur',   type: 'number',   label: 'Blur (px, 0 = Standard)',        value: 0 }
+  ], null, 2);
+}
+
+/* ---- Live Preview ---- */
+var previewDebounce = null;
+
+function buildPreview() {
+  if (!cachedCSS) return;
+  clearTimeout(previewDebounce);
+  previewDebounce = setTimeout(function () { _buildPreview(); }, 60);
+}
+
+function _buildPreview() {
+  var theme    = document.getElementById('sel-theme').value;
+  var shape    = document.getElementById('sel-shape').value;
+  var anim     = document.getElementById('sel-anim').value;
+  var fontSize = document.getElementById('sel-fontsize').value;
+  var showBars = document.getElementById('chk-bars').checked;
+  var showLbl  = document.getElementById('chk-label').checked;
+  var showAlb  = document.getElementById('chk-album').checked;
+
+  var bg = 'radial-gradient(circle at 22% 60%, rgba(110,38,200,0.38) 0%, transparent 46%),'
+         + 'radial-gradient(circle at 76% 28%, rgba(0,128,220,0.30) 0%, transparent 42%),'
+         + 'radial-gradient(circle at 50% 100%, rgba(20,200,120,0.18) 0%, transparent 38%),'
+         + 'linear-gradient(160deg, #0a0c18 0%, #111827 100%)';
+
+  /* Match exactly the body layout in widget.css */
+  var previewCSS = cachedCSS + '\nbody { background: ' + bg + '; align-items:flex-start; justify-content:center; min-height:150px; padding-top:20px; overflow:visible; }\n';
+
+  // Shape preset
+  var shapeMap = { pill: '60px', sharp: '6px', square: '0px' };
+  if (shapeMap[shape]) previewCSS += ':root { --np-radius: ' + shapeMap[shape] + '; }\n';
+
+  var fontSizeMap = { small: '12px', medium: '15px', large: '18px' };
+  var fs = fontSizeMap[fontSize] || '15px';
+  previewCSS += ':root {'
+    + '--np-track-size:' + fs + ';'
+    + '--np-artist-size:' + (parseInt(fs)-3) + 'px;'
+    + '--np-album-size:'  + (parseInt(fs)-5) + 'px;'
+    + '}';
+
+  var themeClass = theme !== 'dark' ? ' np-theme-' + theme : '';
+  var animClass  = (anim && anim !== 'ios') ? ' np-anim-' + anim : '';
+
+  var previewJS = '(function(){'
+    + 'var c=document.getElementById("np-card");'
+    + 'var t=document.getElementById("np-track");'
+    + 'var a=document.getElementById("np-artist");'
+    + 'var al=document.getElementById("np-album");'
+    + 'var fill=document.getElementById("np-progress-fill");'
+    + 'var tm=document.getElementById("np-time");'
+    + 'var bars=document.getElementById("np-bars");'
+    + 'var lbl=document.getElementById("np-now-label");'
+    + 'var alEl=document.getElementById("np-album");'
+    + 'var art=document.getElementById("np-art");'
+    + 'if(t) t.textContent="Flowers";'
+    + 'if(a) a.textContent="Miley Cyrus";'
+    + 'if(al) al.textContent="Endless Summer Vacation";'
+    + 'if(fill) fill.style.width="42%";'
+    + 'if(tm) tm.textContent="1:23 / 3:20";'
+    + 'if(bars) bars.style.display=' + (showBars ? '"flex"' : '"none"') + ';'
+    + 'if(lbl) lbl.style.display=' + (showLbl ? '""' : '"none"') + ';'
+    + 'if(alEl) alEl.style.display=' + (showAlb ? '""' : '"none"') + ';'
+    + 'if(art) art.src="https://lastfm.freetls.fastly.net/i/u/300x300/4128a6eb29f94943c9d206c08e625904.jpg";'
+    + 'if(c){'
+    +   'c.classList.remove("np-hidden");'
+    +   'c.classList.remove("np-notify-in","np-notify-out","np-track-bump");'
+    +   'void c.offsetWidth;'
+    +   'c.classList.add("np-notify-in");'
+    + '}'
+    + '})();';
+
+  var doc = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    + '<style>' + previewCSS + '</style></head>'
+    + '<body>'
+    + '<div class="np-card np-hidden' + themeClass + animClass + '" id="np-card">'
+    + '<div class="np-art-wrap">'
+    + '<img id="np-art" src="" alt="" style="object-fit:cover">'
+    + '<img id="np-art-next" src="" alt="" style="opacity:0;position:absolute;inset:0;width:100%;height:100%;object-fit:cover">'
+    + '</div>'
+    + '<div class="np-info">'
+    + '<div class="np-status" id="np-status">'
+    + '<div class="np-bars" id="np-bars">'
+    + '<div class="np-bar"></div><div class="np-bar"></div>'
+    + '<div class="np-bar"></div><div class="np-bar"></div>'
+    + '</div>'
+    + '<span class="np-now-label" id="np-now-label">Now Playing</span>'
+    + '</div>'
+    + '<div class="np-track" id="np-track"></div>'
+    + '<div class="np-artist" id="np-artist"></div>'
+    + '<div class="np-album" id="np-album"></div>'
+    + '<div class="np-progress-wrap">'
+    + '<div class="np-progress-bar"><div class="np-progress-fill" id="np-progress-fill"></div></div>'
+    + '<span class="np-time" id="np-time"></span>'
+    + '</div>'
+    + '</div>'
+    + '</div>'
+    + '<script>' + previewJS + '<\/script>'
+    + '</body></html>';
+
+  var frame = document.getElementById('preview-frame');
+  frame.srcdoc = doc;
+}
+
+/* ---- Tab switching ---- */
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ---- Copy ---- */
+function copyTab(name) {
+  var text = codeStore[name] || '';
+  navigator.clipboard.writeText(text).then(function () {
+    var btns = document.querySelectorAll('.copy-btn');
+    btns.forEach(function (b) {
+      if (b.getAttribute('onclick') === 'copyTab(\'' + name + '\')') {
+        var orig = b.textContent;
+        b.textContent = '✓ Kopiert!';
+        b.style.background = '#22c55e';
+        setTimeout(function () { b.textContent = orig; b.style.background = ''; }, 1500);
+      }
+    });
+  });
+}
+
+/* ---- Download ---- */
+function downloadAll() {
+  var files = [
+    { name: 'se-widget.css',    content: codeStore.css },
+    { name: 'se-widget.js',     content: codeStore.js },
+    { name: 'se-widget.html',   content: codeStore.html },
+    { name: 'se-fields.json',   content: codeStore.fields }
+  ];
+  files.forEach(function (f) {
+    var blob = new Blob([f.content], { type: 'text/plain' });
+    var a    = document.createElement('a');
+    a.href   = URL.createObjectURL(blob);
+    a.download = f.name;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+}
+
+/* ---- Live controls — rebuild code + preview on any change ---- */
+['sel-theme','sel-shape','sel-fontsize','sel-anim'].forEach(function(id) {
+  document.getElementById(id).addEventListener('change', function() { rebuildCode(); });
+});
+['chk-bars','chk-label','chk-album'].forEach(function(id) {
+  document.getElementById(id).addEventListener('change', function() { rebuildCode(); });
+});
+['inp-user','inp-key'].forEach(function(id) {
+  document.getElementById(id).addEventListener('input', function() { rebuildCode(); });
+});
+
+/* ---- URL params: auto-fill form from query string ---- */
+function applyUrlParams() {
+  var p = new URLSearchParams(window.location.search);
+  if (p.get('user'))  document.getElementById('inp-user').value = p.get('user');
+  if (p.get('key'))   document.getElementById('inp-key').value  = p.get('key');
+  if (p.get('theme')) document.getElementById('sel-theme').value   = p.get('theme');
+  if (p.get('shape')) document.getElementById('sel-shape').value   = p.get('shape');
+  if (p.get('anim'))  document.getElementById('sel-anim').value    = p.get('anim');
+  if (p.get('fs'))    document.getElementById('sel-fontsize').value = p.get('fs');
+  if (p.get('bars')  !== null) document.getElementById('chk-bars').checked  = p.get('bars')  !== '0';
+  if (p.get('label') !== null) document.getElementById('chk-label').checked = p.get('label') !== '0';
+  if (p.get('album') !== null) document.getElementById('chk-album').checked = p.get('album') !== '0';
+}
+
+/* ---- Generate shareable config URL ---- */
+function generateConfigUrl() {
+  var base = window.location.href.split('?')[0].split('#')[0];
+  if (base.startsWith('file://')) {
+    alert('⚠️ Dieser Link funktioniert nur, wenn der Installer auf einem Webserver liegt (z.B. GitHub Pages).\n\nFür lokale Nutzung bitte den Installer direkt teilen.');
+    return;
+  }
+  var p = new URLSearchParams();
+  var user = document.getElementById('inp-user').value.trim();
+  var key  = document.getElementById('inp-key').value.trim();
+  if (user)  p.set('user',  user);
+  if (key)   p.set('key',   key);
+  p.set('theme', document.getElementById('sel-theme').value);
+  p.set('shape', document.getElementById('sel-shape').value);
+  p.set('anim',  document.getElementById('sel-anim').value);
+  p.set('fs',    document.getElementById('sel-fontsize').value);
+  p.set('bars',  document.getElementById('chk-bars').checked  ? '1' : '0');
+  p.set('label', document.getElementById('chk-label').checked ? '1' : '0');
+  p.set('album', document.getElementById('chk-album').checked ? '1' : '0');
+  var url = base + '?' + p.toString();
+  navigator.clipboard.writeText(url).then(function() {
+    var btn = document.getElementById('btn-copy-url');
+    var orig = btn.textContent;
+    btn.textContent = '✓ Link kopiert!';
+    btn.style.background = '#22c55e'; btn.style.color = '#fff';
+    setTimeout(function(){ btn.textContent = orig; btn.style.background = ''; btn.style.color = ''; }, 2000);
+  }).catch(function() {
+    prompt('Link (manuell kopieren):', url);
+  });
+}
+
+/* ---- Init ---- */
+applyUrlParams();
+loadFiles();
+</script>
+
+<!-- ============================================================
+     INSTRUCTIONS / ANLEITUNG — integriert in diese Seite
+     ============================================================ -->
+</div><!-- /.page-wrap -->
+
+<div style="max-width:980px;margin:48px auto 0;border-top:1px solid #252840;padding-top:36px;padding-left:16px;padding-right:16px">
+
+  <h2 style="font-size:1.15rem;font-weight:700;color:#fff;margin-bottom:6px">📖 Anleitung &amp; Hilfe</h2>
+  <p style="color:#64748b;font-size:0.85rem;margin-bottom:28px">Alles was du wissen musst — direkt hier, keine zweite Seite nötig.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+    <div class="card">
+      <h2>🔑 Last.fm API Key erstellen</h2>
+      <div class="steps">
+        <div class="step"><div class="step-body">
+          <div class="step-title">Gehe zu <a href="https://www.last.fm/api/account/create" target="_blank">last.fm/api/account/create</a></div>
+          <div class="step-desc">Mit Last.fm-Account anmelden</div>
+        </div></div>
+        <div class="step"><div class="step-body">
+          <div class="step-title">Neue Application erstellen</div>
+          <div class="step-desc">Name: beliebig (z.B. "Stream Widget") — Callback URL leer lassen</div>
+        </div></div>
+        <div class="step"><div class="step-body">
+          <div class="step-title">API key kopieren (32 Zeichen)</div>
+          <div class="step-desc">In das Feld oben einfügen. Scrobbling muss in Spotify/Apple Music aktiviert sein.</div>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🎬 OBS Setup</h2>
+      <div class="steps">
+        <div class="step"><div class="step-body">
+          <div class="step-title">Overlay-URL aus StreamElements kopieren</div>
+          <div class="step-desc">StreamElements → My Overlays → Launch → URL aus dem Browser kopieren</div>
+        </div></div>
+        <div class="step"><div class="step-body">
+          <div class="step-title">OBS → Browser-Quelle hinzufügen</div>
+          <div class="step-desc">Breite: <strong>400</strong> — Höhe: <strong>120</strong></div>
+        </div></div>
+        <div class="step"><div class="step-body">
+          <div class="step-title">Eigenes CSS setzen</div>
+          <div class="step-desc"><code style="background:#0f1117;padding:2px 6px;border-radius:4px;color:#f0abfc;font-size:0.8em">body { background-color: rgba(0,0,0,0); }</code><br>"Quelle ausblenden wenn nicht sichtbar" → AUS</div>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>⚙️ Einstellungen nachträglich ändern</h2>
+      <p style="margin-bottom:12px">Jederzeit in StreamElements → Widget bearbeiten → <strong>Fields-Tab</strong>:</p>
+      <table style="width:100%;border-collapse:collapse;font-size:0.8rem">
+        <tr><td style="padding:5px 8px;border-bottom:1px solid #1a1e2e;font-family:monospace;color:#a5b4fc">lastfm_user / lastfm_key</td><td style="padding:5px 8px;border-bottom:1px solid #1a1e2e;color:#cbd5e1">Last.fm Zugangsdaten</td></tr>
+        <tr><td style="padding:5px 8px;border-bottom:1px solid #1a1e2e;font-family:monospace;color:#a5b4fc">theme</td><td style="padding:5px 8px;border-bottom:1px solid #1a1e2e;color:#cbd5e1">dark / frosted / light / minimal / neon / liquid</td></tr>
+        <tr><td style="padding:5px 8px;border-bottom:1px solid #1a1e2e;font-family:monospace;color:#a5b4fc">font_size</td><td style="padding:5px 8px;border-bottom:1px solid #1a1e2e;color:#cbd5e1">small / medium / large</td></tr>
+        <tr><td style="padding:5px 8px;border-bottom:1px solid #1a1e2e;font-family:monospace;color:#a5b4fc">show_bars / show_label / show_album</td><td style="padding:5px 8px;border-bottom:1px solid #1a1e2e;color:#cbd5e1">Elemente ein-/ausblenden</td></tr>
+        <tr><td style="padding:5px 8px;font-family:monospace;color:#a5b4fc">custom_width / custom_radius / custom_blur</td><td style="padding:5px 8px;color:#cbd5e1">Größe anpassen (0 = Standard)</td></tr>
+      </table>
+      <div class="notice" style="margin-top:12px">Nach jeder Änderung OBS Browser Source neu laden (Rechtsklick → Interagieren → F5).</div>
+    </div>
+
+    <div class="card">
+      <h2>🔧 Fehlerbehebung</h2>
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:0.85rem">
+        <div><strong style="color:#e2e8f0">Widget bleibt leer</strong><br><span style="color:#64748b">Benutzername + API Key prüfen. Scrobbling in der Musik-App aktiviert?</span></div>
+        <div><strong style="color:#e2e8f0">Kein Album-Cover</strong><br><span style="color:#64748b">Last.fm-Profil muss öffentlich sein (Last.fm → Einstellungen → Datenschutz)</span></div>
+        <div><strong style="color:#e2e8f0">Design-Änderungen wirken nicht</strong><br><span style="color:#64748b">OBS Browser Source mit F5 neu laden</span></div>
+        <div><strong style="color:#e2e8f0">Widget zeigt alten Song</strong><br><span style="color:#64748b">Normal — Last.fm Scrobble-Verzögerung bis 30 Sekunden</span></div>
+        <div><strong style="color:#e2e8f0">Kein Frosted-Glass-Effekt sichtbar</strong><br><span style="color:#64748b">Backdrop-filter braucht Hintergrundinhalt — OBS-Szene muss Inhalte hinter dem Widget haben</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <p style="margin-top:36px;color:#334155;font-size:0.75rem;text-align:center">© 2025 — Frosted Glass Now Playing Widget v1.3 · Bei Fragen: Etsy-Shop kontaktieren</p>
+</div>
+
+</body>
+</html>

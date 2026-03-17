@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Now Playing Widget</title>
+  <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+  <div class="np-card np-hidden" id="np-card">
+
+    <div class="np-art-wrap">
+      <img id="np-art"      src="" alt="Album Art">
+      <img id="np-art-next" src="" alt="">
+    </div>
+
+    <div class="np-info">
+      <div class="np-status" id="np-status">
+        <div class="np-bars" id="np-bars">
+          <div class="np-bar"></div>
+          <div class="np-bar"></div>
+          <div class="np-bar"></div>
+          <div class="np-bar"></div>
+        </div>
+        <span class="np-now-label" id="np-now-label">Now Playing</span>
+      </div>
+
+      <div class="np-track"  id="np-track"></div>
+      <div class="np-artist" id="np-artist"></div>
+      <div class="np-album"  id="np-album"></div>
+
+      <div class="np-progress-wrap">
+        <div class="np-progress-bar">
+          <div class="np-progress-fill" id="np-progress-fill"></div>
+        </div>
+        <span class="np-time" id="np-time"></span>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="widget.js"></script>
+</body>
+</html>

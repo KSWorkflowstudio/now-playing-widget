@@ -1,0 +1,101 @@
+[
+  {
+    "name": "lastfm_user",
+    "type": "text",
+    "label": "Last.fm Benutzername",
+    "value": ""
+  },
+  {
+    "name": "lastfm_key",
+    "type": "text",
+    "label": "Last.fm API Key",
+    "value": ""
+  },
+  {
+    "name": "theme",
+    "type": "dropdown",
+    "label": "Design / Theme",
+    "value": "dark",
+    "options": {
+      "dark": "Dark (Standard)",
+      "frosted": "Frosted Glass",
+      "light": "Light",
+      "minimal": "Minimal",
+      "neon": "Neon",
+      "liquid": "Liquid Glass"
+    }
+  },
+  {
+    "name": "shape",
+    "type": "dropdown",
+    "label": "Widget Form",
+    "value": "default",
+    "options": {
+      "default": "Rund (Standard)",
+      "pill":    "Pille",
+      "sharp":   "Eckig",
+      "square":  "Quadratisch"
+    }
+  },
+  {
+    "name": "animation",
+    "type": "dropdown",
+    "label": "Einblend-Animation",
+    "value": "ios",
+    "options": {
+      "ios":          "iOS Notification ✦ (Standard)",
+      "fade":         "Sanftes Einblenden",
+      "slide-left":   "Von links einfahren",
+      "slide-right":  "Von rechts einfahren",
+      "scale":        "Aufpoppen",
+      "slide-bottom": "Von unten einfahren"
+    }
+  },
+  {
+    "name": "font_size",
+    "type": "dropdown",
+    "label": "Schriftgröße",
+    "value": "medium",
+    "options": {
+      "small":  "Klein",
+      "medium": "Mittel",
+      "large":  "Groß"
+    }
+  },
+  {
+    "name": "show_bars",
+    "type": "checkbox",
+    "label": "EQ-Balken anzeigen",
+    "value": true
+  },
+  {
+    "name": "show_label",
+    "type": "checkbox",
+    "label": "\"Now Playing\" Label anzeigen",
+    "value": true
+  },
+  {
+    "name": "show_album",
+    "type": "checkbox",
+    "label": "Album anzeigen",
+    "value": true
+  },
+  {
+    "name": "custom_width",
+    "type": "number",
+    "label": "Breite (px, 0 = Standard 400px)",
+    "value": 0
+  },
+  {
+    "name": "custom_radius",
+    "type": "number",
+    "label": "Eckenradius (px, 0 = Standard 18px)",
+    "value": 0
+  },
+  {
+    "name": "custom_blur",
+    "type": "number",
+    "label": "Blur-Stärke (px, 0 = Standard 28px)",
+    "value": 0
+  }
+]
