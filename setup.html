@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎵 Now Playing Widget – StreamElements Einrichtung</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0b0d14;
+  color: #e2e8f0;
+  min-height: 100vh;
+  padding: 32px 16px 72px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+p  { color: #94a3b8; font-size: 0.87rem; line-height: 1.6; }
+a  { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.wrap { width: 100%; max-width: 520px; }
+
+/* ---- Header ---- */
+.page-header { text-align: center; margin-bottom: 26px; }
+.page-header h1 { font-size: 1.45rem; font-weight: 700; margin-bottom: 4px; }
+.page-header p  { color: #64748b; font-size: 0.88rem; }
+.badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff; font-size: 0.68rem; font-weight: 700;
+  padding: 2px 9px; border-radius: 99px;
+  margin-left: 7px; vertical-align: middle;
+}
+
+/* ---- Preview ---- */
+.preview-hero {
+  background: radial-gradient(circle at 18% 55%, rgba(100,30,200,0.40) 0%, transparent 44%),
+              radial-gradient(circle at 78% 25%, rgba(0,110,230,0.32) 0%, transparent 40%),
+              linear-gradient(160deg, #08091a 0%, #0e1323 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.07);
+  margin-bottom: 20px;
+  padding: 22px 16px 18px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.preview-label {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: rgba(255,255,255,0.22);
+  margin-bottom: 14px;
+}
+.preview-iframe-wrap { width: 440px; max-width: 100%; height: 140px; overflow: visible; }
+.preview-iframe-wrap iframe { width: 100%; height: 100%; border: none; background: transparent; overflow: visible; }
+
+/* ---- Card ---- */
+.card {
+  background: #161824;
+  border: 1px solid #252840;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+.card-title { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 16px; }
+
+/* ---- States ---- */
+.state { display: none; }
+.state.active { display: block; }
+
+/* ---- Form ---- */
+label { display: block; font-size: 0.8rem; color: #8892a4; margin-bottom: 6px; font-weight: 500; }
+input[type="text"], input[type="password"] {
+  width: 100%; padding: 10px 12px;
+  background: #0b0d14; border: 1px solid #252840;
+  border-radius: 8px; color: #e2e8f0; font-size: 0.85rem;
+  outline: none; transition: border-color 0.18s;
+  font-family: 'Fira Code', 'Cascadia Code', monospace;
+}
+input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+.field { margin-bottom: 16px; }
+.field-hint { font-size: 0.75rem; color: #475569; margin-top: 5px; line-height: 1.55; }
+
+/* ---- Mini steps ---- */
+.mini-steps {
+  background: #0f1119;
+  border: 1px solid #1c1f30;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.mini-step {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #1c1f30;
+  font-size: 0.82rem; color: #94a3b8; line-height: 1.5;
+}
+.mini-step:last-child { border-bottom: none; }
+.mini-step-n {
+  flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+  background: #252840; color: #818cf8;
+  font-size: 0.7rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; margin-top: 1px;
+}
+.mini-step strong { color: #e2e8f0; }
+
+/* ---- Buttons ---- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 11px 20px; border-radius: 9px; border: none;
+  font-size: 0.88rem; font-weight: 600; cursor: pointer;
+  transition: opacity 0.18s, transform 0.1s; width: 100%;
+}
+.btn:active { transform: scale(0.98); }
+.btn-primary   { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; }
+.btn-secondary { background: #252840; color: #e2e8f0; }
+.btn-ghost     { background: transparent; color: #64748b; border: 1px solid #252840; }
+.btn:hover { opacity: 0.88; }
+.btn + .btn { margin-top: 9px; }
+
+/* ---- Loading ---- */
+.spinner {
+  width: 38px; height: 38px;
+  border: 3px solid #252840; border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.72s linear infinite;
+  margin: 8px auto 18px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- Success ---- */
+.success-icon { font-size: 2.6rem; text-align: center; margin-bottom: 10px; }
+.success-title { font-size: 1.1rem; font-weight: 700; color: #fff; text-align: center; margin-bottom: 4px; }
+.success-sub   { text-align: center; color: #64748b; font-size: 0.84rem; margin-bottom: 18px; }
+.overlay-url-box {
+  background: #0b0d14; border: 1px solid #252840; border-radius: 8px;
+  padding: 10px 13px; font-family: monospace; font-size: 0.77rem; color: #a5b4fc;
+  word-break: break-all; margin: 10px 0 4px; cursor: pointer;
+  transition: border-color 0.15s;
+}
+.overlay-url-box:hover { border-color: #6366f1; }
+.copy-hint { font-size: 0.71rem; color: #334155; text-align: center; margin-bottom: 14px; }
+
+/* ---- Error ---- */
+.error-icon { font-size: 2.2rem; text-align: center; margin-bottom: 10px; }
+.error-msg {
+  font-size: 0.83rem; color: #f87171;
+  background: rgba(239,68,68,0.09); border: 1px solid rgba(239,68,68,0.22);
+  border-radius: 8px; padding: 11px 14px; margin-bottom: 14px; line-height: 1.55;
+}
+.error-fallback { font-size: 0.8rem; color: #64748b; line-height: 1.6; margin-bottom: 14px; }
+
+/* ---- Notice / divider ---- */
+.notice {
+  background: rgba(99,102,241,0.10); border: 1px solid rgba(99,102,241,0.22);
+  border-radius: 8px; padding: 11px 14px; font-size: 0.8rem; color: #a5b4fc;
+  margin-top: 14px; line-height: 1.55;
+}
+.divider { border: none; border-top: 1px solid #252840; margin: 16px 0; }
+code { background: #0f1117; padding: 1px 5px; border-radius: 3px; font-size: 0.85em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ====== HEADER ====== -->
+<div class="page-header">
+  <h1>🎵 Now Playing Widget <span class="badge">v1.4</span></h1>
+  <p>StreamElements Einrichtung &middot; 2 Schritte, kein Code</p>
+</div>
+
+<!-- ====== LIVE PREVIEW ====== -->
+<div class="preview-hero">
+  <div class="preview-label">Deine Widget-Vorschau</div>
+  <div class="preview-iframe-wrap">
+    <iframe id="preview-frame" title="Widget Vorschau" scrolling="no"></iframe>
+  </div>
+</div>
+
+<!-- ====== SETUP CARD ====== -->
+<div class="card">
+
+  <!-- STATE: Input -->
+  <div class="state active" id="state-input">
+    <div class="card-title">🔗 Widget in StreamElements anlegen</div>
+
+    <div class="mini-steps">
+      <div class="mini-step">
+        <div class="mini-step-n">1</div>
+        <div>Öffne <a href="https://streamelements.com/dashboard/account/your-account" target="_blank" rel="noopener"><strong>StreamElements → Account</strong></a> und logge dich ein</div>
+      </div>
+      <div class="mini-step">
+        <div class="mini-step-n">2</div>
+        <div>Scrolle nach unten → klicke auf <strong>„Show Token"</strong> → Token kopieren</div>
+      </div>
+      <div class="mini-step">
+        <div class="mini-step-n">3</div>
+        <div>Token unten einfügen → auf <strong>„Widget anlegen"</strong> klicken</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="inp-token">StreamElements API Token</label>
+      <input type="password" id="inp-token"
+        placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…"
+        autocomplete="off" spellcheck="false">
+      <div class="field-hint">
+        Der Token ist nur lokal in deinem Browser aktiv — er wird nicht gespeichert oder weitergegeben.
+        <a href="https://streamelements.com/dashboard/account/your-account" target="_blank" rel="noopener">→ Zum SE Account</a>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="btn-install" onclick="connectAndInstall()">
+      ✨ Widget in StreamElements anlegen
+    </button>
+
+    <div class="notice">
+      Das Widget wird direkt in deinem StreamElements-Account angelegt. Alle Einstellungen (Theme, Animation, Last.fm API Key usw.) kannst du danach jederzeit im <strong>Fields-Tab</strong> in SE ändern — ohne Code.
+    </div>
+  </div>
+
+  <!-- STATE: Loading -->
+  <div class="state" id="state-loading">
+    <div class="spinner"></div>
+    <p style="text-align:center;color:#64748b;font-size:0.88rem">Widget wird in StreamElements angelegt…</p>
+  </div>
+
+  <!-- STATE: Success -->
+  <div class="state" id="state-success">
+    <div class="success-icon">🎉</div>
+    <div class="success-title">Widget angelegt!</div>
+    <p class="success-sub">Das Widget ist jetzt in deinem StreamElements-Account.</p>
+
+    <hr class="divider">
+
+    <p style="font-size:0.82rem;font-weight:600;color:#94a3b8;margin-bottom:6px">Overlay-Link für OBS Browser Source:</p>
+    <div class="overlay-url-box" id="overlay-url-display" onclick="copyOverlayUrl()">—</div>
+    <div class="copy-hint">Klicken zum Kopieren</div>
+
+    <button class="btn btn-primary" onclick="openSeDashboard()">
+      🎬 In StreamElements öffnen
+    </button>
+
+    <div class="notice" style="margin-top:14px">
+      <strong>OBS Browser Source:</strong> Breite <code>400</code> &middot; Höhe <code>120</code> &middot; Eigenes CSS: <code style="color:#f0abfc">body{background:rgba(0,0,0,0)}</code><br>
+      <span style="color:#6366f1;opacity:0.8">„Quelle ausblenden wenn nicht sichtbar" → AUS lassen</span>
+    </div>
+
+    <hr class="divider">
+    <p style="font-size:0.8rem;color:#475569">Nach der Einrichtung noch <strong style="color:#94a3b8">Last.fm Benutzername &amp; API Key</strong> im Fields-Tab eintragen — dann ist das Widget aktiv.</p>
+  </div>
+
+  <!-- STATE: Error -->
+  <div class="state" id="state-error">
+    <div class="error-icon">⚠️</div>
+    <div class="error-msg" id="error-msg-text"></div>
+    <p class="error-fallback">
+      Alternative: Lade die vorbereitete Overlay-Datei herunter und importiere sie in StreamElements
+      (<strong style="color:#94a3b8">My Overlays → New → Import</strong>).
+    </p>
+    <button class="btn btn-secondary" onclick="downloadSeOverlay()">
+      📦 Overlay als JSON herunterladen
+    </button>
+    <button class="btn btn-ghost" onclick="resetToInput()" style="margin-top:8px">
+      ← Zurück &amp; Token prüfen
+    </button>
+  </div>
+
+</div><!-- /.card -->
+
+<!-- ====== FOOTER ====== -->
+<p style="text-align:center;color:#334155;font-size:0.73rem">
+  © 2025 · Frosted Glass Now Playing Widget ·
+  <a href="./index.html" style="color:#334155">Installer öffnen</a>
+</p>
+
+</div><!-- /.wrap -->
+
+<!-- ============================================================
+     EMBEDDED WIDGET CODE (fallback if fetch fails)
+     ============================================================ -->
+<script type="text/plain" id="embed-css">/* ============================================================
+   NOW PLAYING WIDGET — Frosted Glass / Kindle Style
+   StreamElements Custom Widget CSS
+   ============================================================ */
+
+/* ---------- CSS Custom Properties (theme contract) ---------- */
+:root {
+  --np-width:        400px;
+  --np-radius:       18px;
+  --np-blur:         28px;
+  --np-padding:      14px 16px;
+  --np-gap:          14px;
+  --np-art-size:     72px;
+
+  --np-bg:           rgba(10, 10, 20, 0.72);
+  --np-border:       rgba(255,255,255,0.10);
+  --np-shadow:       0 8px 40px rgba(0,0,0,0.55);
+
+  --np-font:         'Inter', 'Segoe UI', sans-serif;
+  --np-track-color:  #ffffff;
+  --np-artist-color: rgba(255,255,255,0.75);
+  --np-album-color:  rgba(255,255,255,0.45);
+  --np-track-size:   15px;
+  --np-artist-size:  13px;
+  --np-album-size:   11px;
+
+  --np-progress-h:   3px;
+  --np-progress-bg:  rgba(255,255,255,0.15);
+  --np-progress-fill:#1db954;
+
+  --np-viz-color:    rgba(255,255,255,0.55);
+  --np-transition-ms:500;
+
+  --np-body-bg:      transparent;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--np-body-bg);
+  font-family: var(--np-font);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.np-card {
+  display: flex; align-items: center; gap: var(--np-gap);
+  width: var(--np-width); padding: var(--np-padding);
+  background: var(--np-bg);
+  backdrop-filter: blur(var(--np-blur)) saturate(180%) brightness(108%);
+  -webkit-backdrop-filter: blur(var(--np-blur)) saturate(180%) brightness(108%);
+  border-radius: var(--np-radius);
+  border: 1px solid var(--np-border);
+  box-shadow: var(--np-shadow), inset 0 1px 0 rgba(255,255,255,0.13), inset 0 -1px 0 rgba(0,0,0,0.18);
+  will-change: transform, opacity; position: relative; overflow: hidden;
+}
+.np-card.np-hidden { opacity: 0; pointer-events: none; }
+
+@keyframes np-notify-in {
+  0%   { transform: translateY(-120%) scale(0.92); opacity: 0; }
+  45%  { opacity: 1; }
+  62%  { transform: translateY(10px)  scale(1.02); }
+  78%  { transform: translateY(-5px)  scale(0.99); }
+  90%  { transform: translateY(2px)   scale(1.005); }
+  100% { transform: translateY(0)     scale(1); opacity: 1; }
+}
+@keyframes np-notify-out {
+  0%   { transform: translateY(0)     scale(1);    opacity: 1; }
+  25%  { transform: translateY(6px)   scale(0.98); opacity: 1; }
+  100% { transform: translateY(-115%) scale(0.92); opacity: 0; }
+}
+@keyframes np-track-bump {
+  0%   { transform: translateY(0); }
+  28%  { transform: translateY(-9px) scale(0.97); }
+  58%  { transform: translateY(4px)  scale(1.01); }
+  80%  { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
+.np-card.np-notify-in  { animation: np-notify-in  0.62s cubic-bezier(0.34, 1.3, 0.64, 1) forwards; }
+.np-card.np-notify-out { animation: np-notify-out 0.38s cubic-bezier(0.55, 0, 0.8, 1) forwards; }
+.np-card.np-track-bump { animation: np-track-bump 0.42s cubic-bezier(0.34, 1.2, 0.64, 1); }
+
+@keyframes np-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes np-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes np-slide-left-in {
+  0%   { transform: translateX(-115%) scale(0.94); opacity: 0; }
+  55%  { transform: translateX(8px)   scale(1.01); opacity: 1; }
+  78%  { transform: translateX(-3px)  scale(0.99); }
+  100% { transform: translateX(0)     scale(1);    opacity: 1; }
+}
+@keyframes np-slide-left-out {
+  0%   { transform: translateX(0)      scale(1);    opacity: 1; }
+  25%  { transform: translateX(8px)    scale(0.98); opacity: 1; }
+  100% { transform: translateX(-115%)  scale(0.94); opacity: 0; }
+}
+@keyframes np-slide-right-in {
+  0%   { transform: translateX(115%)  scale(0.94); opacity: 0; }
+  55%  { transform: translateX(-8px)  scale(1.01); opacity: 1; }
+  78%  { transform: translateX(3px)   scale(0.99); }
+  100% { transform: translateX(0)     scale(1);    opacity: 1; }
+}
+@keyframes np-slide-right-out {
+  0%   { transform: translateX(0)     scale(1);    opacity: 1; }
+  25%  { transform: translateX(-8px)  scale(0.98); opacity: 1; }
+  100% { transform: translateX(115%)  scale(0.94); opacity: 0; }
+}
+@keyframes np-scale-in {
+  0%   { transform: scale(0.70); opacity: 0; }
+  62%  { transform: scale(1.05); opacity: 1; }
+  80%  { transform: scale(0.97); }
+  100% { transform: scale(1);    opacity: 1; }
+}
+@keyframes np-scale-out {
+  0%   { transform: scale(1);    opacity: 1; }
+  28%  { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(0.70); opacity: 0; }
+}
+@keyframes np-slide-bottom-in {
+  0%   { transform: translateY(115%)  scale(0.94); opacity: 0; }
+  55%  { transform: translateY(-8px)  scale(1.01); opacity: 1; }
+  78%  { transform: translateY(3px)   scale(0.99); }
+  100% { transform: translateY(0)     scale(1);    opacity: 1; }
+}
+@keyframes np-slide-bottom-out {
+  0%   { transform: translateY(0)     scale(1);    opacity: 1; }
+  25%  { transform: translateY(-8px)  scale(0.98); opacity: 1; }
+  100% { transform: translateY(115%)  scale(0.94); opacity: 0; }
+}
+.np-anim-fade.np-notify-in          { animation: np-fade-in          0.45s ease                          forwards; }
+.np-anim-fade.np-notify-out         { animation: np-fade-out         0.35s ease                          forwards; }
+.np-anim-slide-left.np-notify-in    { animation: np-slide-left-in    0.52s cubic-bezier(0.34,1.2,0.64,1) forwards; }
+.np-anim-slide-left.np-notify-out   { animation: np-slide-left-out   0.36s cubic-bezier(0.55,0,0.8,1)    forwards; }
+.np-anim-slide-right.np-notify-in   { animation: np-slide-right-in   0.52s cubic-bezier(0.34,1.2,0.64,1) forwards; }
+.np-anim-slide-right.np-notify-out  { animation: np-slide-right-out  0.36s cubic-bezier(0.55,0,0.8,1)    forwards; }
+.np-anim-scale.np-notify-in         { animation: np-scale-in         0.48s cubic-bezier(0.34,1.3,0.64,1) forwards; }
+.np-anim-scale.np-notify-out        { animation: np-scale-out        0.32s cubic-bezier(0.55,0,0.8,1)    forwards; }
+.np-anim-slide-bottom.np-notify-in  { animation: np-slide-bottom-in  0.52s cubic-bezier(0.34,1.2,0.64,1) forwards; }
+.np-anim-slide-bottom.np-notify-out { animation: np-slide-bottom-out 0.36s cubic-bezier(0.55,0,0.8,1)    forwards; }
+
+.np-art-wrap {
+  position: relative; flex-shrink: 0;
+  width: var(--np-art-size); height: var(--np-art-size);
+  border-radius: calc(var(--np-radius) - 4px);
+  overflow: hidden; box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+}
+.np-art-wrap img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+#np-art-next { opacity: 0; z-index: 1; }
+
+.np-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.np-status { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.np-bars { display: flex; align-items: flex-end; gap: 2px; height: 12px; }
+.np-bar {
+  width: 3px; background: var(--np-viz-color); border-radius: 2px;
+  animation: np-bar-bounce 0.8s ease-in-out infinite alternate;
+  transform-origin: bottom;
+}
+.np-bar:nth-child(1) { animation-duration: 0.72s; animation-delay: 0s;    height: 60%; }
+.np-bar:nth-child(2) { animation-duration: 0.60s; animation-delay: 0.1s;  height: 100%; }
+.np-bar:nth-child(3) { animation-duration: 0.85s; animation-delay: 0.05s; height: 80%; }
+.np-bar:nth-child(4) { animation-duration: 0.65s; animation-delay: 0.15s; height: 50%; }
+@keyframes np-bar-bounce { 0% { transform: scaleY(0.25); } 100% { transform: scaleY(1); } }
+.np-card.np-paused .np-bar { animation-play-state: paused; transform: scaleY(0.25); }
+
+.np-now-label { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--np-progress-fill); opacity: 0.9; }
+.np-track  { font-size: var(--np-track-size);  font-weight: 600; color: var(--np-track-color);  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.np-artist { font-size: var(--np-artist-size); color: var(--np-artist-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.np-album  { font-size: var(--np-album-size);  color: var(--np-album-color);  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.np-progress-wrap { margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+.np-progress-bar { flex: 1; height: var(--np-progress-h); background: var(--np-progress-bg); border-radius: 99px; overflow: hidden; }
+.np-progress-fill { height: 100%; background: var(--np-progress-fill); border-radius: 99px; width: 0%; transition: width 1s linear; }
+.np-time { font-size: 9px; color: var(--np-album-color); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.np-theme-light {
+  --np-bg:           rgba(255,255,255,0.68);
+  --np-border:       rgba(0,0,0,0.08);
+  --np-shadow:       0 8px 40px rgba(0,0,0,0.18);
+  --np-track-color:  #111111;
+  --np-artist-color: rgba(0,0,0,0.65);
+  --np-album-color:  rgba(0,0,0,0.40);
+  --np-progress-bg:  rgba(0,0,0,0.12);
+  --np-viz-color:    rgba(0,0,0,0.45);
+}
+.np-theme-minimal {
+  --np-bg:    rgba(0,0,0,0.45);
+  --np-blur:  8px;
+  --np-border:transparent;
+  --np-shadow:none;
+  --np-radius:8px;
+}
+.np-theme-neon {
+  --np-bg:            rgba(5,0,20,0.80);
+  --np-border:        rgba(120,40,255,0.45);
+  --np-progress-fill: #a855f7;
+  --np-viz-color:     rgba(168,85,247,0.75);
+}
+.np-theme-frosted {
+  --np-bg:            rgba(22,18,35,0.70);
+  --np-blur:          32px;
+  --np-border:        rgba(255,240,210,0.13);
+  --np-shadow:        0 8px 40px rgba(0,0,0,0.60);
+  --np-track-color:   #f5f0ff;
+  --np-artist-color:  rgba(235,220,255,0.78);
+  --np-album-color:   rgba(210,195,240,0.50);
+  --np-progress-fill: #c4a0ff;
+  --np-viz-color:     rgba(200,180,255,0.60);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.60), inset 0 1.5px 0 rgba(255,245,220,0.18), inset 0 -1px 0 rgba(150,100,255,0.12);
+}
+.np-theme-liquid {
+  --np-bg:            rgba(255,255,255,0.14);
+  --np-blur:          48px;
+  --np-border:        rgba(255,255,255,0.32);
+  --np-shadow:        0 8px 48px rgba(120,80,255,0.22), 0 2px 12px rgba(0,0,0,0.22);
+  --np-track-color:   #ffffff;
+  --np-artist-color:  rgba(255,255,255,0.85);
+  --np-album-color:   rgba(255,255,255,0.58);
+  --np-progress-bg:   rgba(255,255,255,0.20);
+  --np-progress-fill: #e8d5ff;
+  --np-viz-color:     rgba(255,255,255,0.80);
+  backdrop-filter: blur(48px) saturate(240%) brightness(128%) contrast(102%);
+  -webkit-backdrop-filter: blur(48px) saturate(240%) brightness(128%) contrast(102%);
+  box-shadow: 0 8px 48px rgba(120,80,255,0.22), 0 2px 12px rgba(0,0,0,0.22), inset 0 1.5px 0 rgba(255,255,255,0.55), inset 0 -1px 0 rgba(200,180,255,0.18);
+}
+.np-theme-liquid::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(138deg, rgba(255,255,255,0.28) 0%, rgba(190,140,255,0.10) 28%, rgba(80,210,255,0.09) 56%, rgba(255,220,180,0.07) 80%, rgba(255,255,255,0.04) 100%);
+  pointer-events: none; z-index: 0;
+}
+.np-theme-liquid .np-art-wrap,
+.np-theme-liquid .np-info { position: relative; z-index: 1; }
+</script>
+
+<script type="text/plain" id="embed-js">'use strict';
+
+var fields = {
+  lastfm_user:   '',
+  lastfm_key:    '',
+  theme:         'dark',
+  shape:         'default',
+  animation:     'ios',
+  show_album:    true,
+  show_bars:     true,
+  show_label:    true,
+  font_size:     'medium',
+  custom_width:  0,
+  custom_radius: 0,
+  custom_blur:   0
+};
+
+var DEFAULT_ART = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"%3E%3Crect width="72" height="72" fill="%23222"%2F%3E%3Ccircle cx="36" cy="36" r="14" fill="%23444"%2F%3E%3Ccircle cx="36" cy="36" r="5" fill="%23222"%2F%3E%3C%2Fsvg%3E';
+
+var lastTrackId = null, lastArtUrl = null, progressMs = 0, durationMs = 0;
+var isPlaying = false, cardVisible = false, progressInterval = null;
+
+var root = document.documentElement;
+var cardEl   = document.getElementById('np-card');
+var trackEl  = document.getElementById('np-track');
+var artistEl = document.getElementById('np-artist');
+var albumEl  = document.getElementById('np-album');
+var artEl    = document.getElementById('np-art');
+var artNextEl= document.getElementById('np-art-next');
+var fillEl   = document.getElementById('np-progress-fill');
+var timeEl   = document.getElementById('np-time');
+var barsEl   = document.getElementById('np-bars');
+var labelEl  = document.getElementById('np-now-label');
+var statusEl = document.getElementById('np-status');
+
+function fmt(ms) {
+  if (!ms || isNaN(ms)) return '';
+  var s = Math.floor(ms / 1000), m = Math.floor(s / 60); s = s % 60;
+  return m + ':' + (s < 10 ? '0' : '') + s;
+}
+function fieldBool(key, def) {
+  var v = fields[key];
+  if (v === undefined || v === null) return def;
+  return v === true || v === 'true';
+}
+function setOrReset(prop, val) {
+  var n = parseFloat(val);
+  if (n > 0) root.style.setProperty(prop, n + 'px');
+  else        root.style.removeProperty(prop);
+}
+function applyAppearance() {
+  cardEl.classList.remove('np-theme-dark','np-theme-frosted','np-theme-light','np-theme-minimal','np-theme-neon','np-theme-liquid');
+  if (fields.theme && fields.theme !== 'dark') cardEl.classList.add('np-theme-' + fields.theme);
+  cardEl.classList.remove('np-anim-fade','np-anim-slide-left','np-anim-slide-right','np-anim-scale','np-anim-slide-bottom');
+  if (fields.animation && fields.animation !== 'ios') cardEl.classList.add('np-anim-' + fields.animation);
+  setOrReset('--np-width', fields.custom_width);
+  setOrReset('--np-blur',  fields.custom_blur);
+  var customR = parseFloat(fields.custom_radius);
+  if (customR > 0) { root.style.setProperty('--np-radius', customR + 'px'); }
+  else {
+    var shapeMap = { pill: '60px', sharp: '6px', square: '0px' };
+    var sr = shapeMap[fields.shape];
+    if (sr) root.style.setProperty('--np-radius', sr);
+    else    root.style.removeProperty('--np-radius');
+  }
+  if (albumEl)  albumEl.style.display  = fieldBool('show_album', true) ? '' : 'none';
+  if (barsEl)   barsEl.style.display   = fieldBool('show_bars',  true) ? '' : 'none';
+  if (labelEl)  labelEl.style.display  = fieldBool('show_label', true) ? '' : 'none';
+  if (statusEl) statusEl.style.display = (fieldBool('show_bars',true)||fieldBool('show_label',true)) ? '' : 'none';
+  var fsMap = { small:'12px', medium:'15px', large:'18px' };
+  var fs = fsMap[fields.font_size];
+  if (fs) {
+    root.style.setProperty('--np-track-size',  fs);
+    root.style.setProperty('--np-artist-size', (parseInt(fs)-3)+'px');
+    root.style.setProperty('--np-album-size',  (parseInt(fs)-5)+'px');
+  }
+}
+function removeAnimClasses() { cardEl.classList.remove('np-notify-in','np-notify-out','np-track-bump'); }
+function showCard() {
+  if (cardVisible) return; cardVisible = true;
+  removeAnimClasses(); cardEl.classList.remove('np-hidden'); void cardEl.offsetWidth;
+  cardEl.classList.add('np-notify-in');
+  cardEl.addEventListener('animationend', function onIn() { cardEl.removeEventListener('animationend',onIn); cardEl.classList.remove('np-notify-in'); });
+}
+function hideCard() {
+  if (!cardVisible) return; cardVisible = false;
+  removeAnimClasses(); void cardEl.offsetWidth;
+  cardEl.classList.add('np-notify-out');
+  cardEl.addEventListener('animationend', function onOut() { cardEl.removeEventListener('animationend',onOut); cardEl.classList.remove('np-notify-out'); cardEl.classList.add('np-hidden'); });
+}
+function bumpTrack() {
+  removeAnimClasses(); void cardEl.offsetWidth; cardEl.classList.add('np-track-bump');
+  cardEl.addEventListener('animationend', function onBump() { cardEl.removeEventListener('animationend',onBump); cardEl.classList.remove('np-track-bump'); });
+}
+function crossfadeArt(newUrl) {
+  if (!newUrl) newUrl = DEFAULT_ART;
+  if (newUrl === lastArtUrl) return; lastArtUrl = newUrl; if (!artEl) return;
+  var preload = new Image();
+  preload.onload = function() {
+    if (!artNextEl) { artEl.src = newUrl; return; }
+    artNextEl.style.transition='opacity 0s'; artNextEl.style.opacity='0'; artNextEl.src=newUrl;
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
+      artNextEl.style.transition='opacity 0.5s ease'; artNextEl.style.opacity='1';
+      setTimeout(function(){ artEl.src=newUrl; artNextEl.style.transition='opacity 0s'; artNextEl.style.opacity='0'; }, 520);
+    }); });
+  };
+  preload.onerror = function(){ artEl.src=DEFAULT_ART; lastArtUrl=DEFAULT_ART; };
+  preload.src = newUrl;
+}
+function startProgress() {
+  if (progressInterval) clearInterval(progressInterval); if (!isPlaying) return;
+  progressInterval = setInterval(function(){ progressMs+=1000; if(durationMs>0&&progressMs>durationMs) progressMs=durationMs; renderProgress(); }, 1000);
+}
+function renderProgress() {
+  if (!fillEl) return;
+  fillEl.style.width = Math.min(100, durationMs>0 ? progressMs/durationMs*100 : 0) + '%';
+  if (timeEl) timeEl.textContent = durationMs>0 ? fmt(progressMs)+' / '+fmt(durationMs) : fmt(progressMs);
+}
+function showTrack(data) {
+  var trackId = (data.artist||'')+'|'+(data.title||''); var isNew = (trackId!==lastTrackId);
+  if (trackEl)  trackEl.textContent  = data.title  || '';
+  if (artistEl) artistEl.textContent = data.artist || '';
+  if (albumEl)  albumEl.textContent  = data.album  || '';
+  isPlaying = !!data.isPlaying;
+  if (cardEl) { isPlaying ? cardEl.classList.remove('np-paused') : cardEl.classList.add('np-paused'); }
+  progressMs=data.progressMs||0; durationMs=data.durationMs||0; renderProgress(); startProgress();
+  if (!cardVisible) { lastTrackId=trackId; crossfadeArt(data.artUrl); showCard(); }
+  else if (isNew)   { lastTrackId=trackId; crossfadeArt(data.artUrl); bumpTrack(); }
+  else              { crossfadeArt(data.artUrl); }
+}
+function pollLastFm() {
+  var user=fields.lastfm_user, key=fields.lastfm_key; if(!user||!key) return;
+  fetch('https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user='+encodeURIComponent(user)+'&api_key='+encodeURIComponent(key)+'&format=json&limit=1')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(data.error){if(trackEl)trackEl.textContent='Last.fm Error '+data.error; showCard();return;}
+      var tracks=data.recenttracks&&data.recenttracks.track; if(!tracks){hideCard();return;}
+      var track=Array.isArray(tracks)?tracks[0]:tracks; if(!track){hideCard();return;}
+      var isNow=!!(track['@attr']&&track['@attr'].nowplaying==='true');
+      var isRecent=false;
+      if(!isNow&&track.date&&track.date.uts){var age=Math.floor(Date.now()/1000)-parseInt(track.date.uts,10);isRecent=age>=0&&age<480;}
+      if(!isNow&&!isRecent){hideCard();return;}
+      var artUrl='';
+      if(track.image&&track.image.length){for(var i=track.image.length-1;i>=0;i--){if(track.image[i]['#text']){artUrl=track.image[i]['#text'];break;}}}
+      showTrack({title:track.name||'',artist:(track.artist&&(track.artist['#text']||track.artist.name))||'',album:(track.album&&track.album['#text'])||'',artUrl:artUrl,isPlaying:isNow,progressMs:0,durationMs:0});
+    }).catch(function(e){console.error('[NP]',e);});
+}
+window.addEventListener('onWidgetLoad',function(e){
+  window.__np_started=true; var d=e.detail||{}; fields=Object.assign(fields,d.fieldData||{});
+  applyAppearance(); if(artEl)artEl.src=DEFAULT_ART;
+  if(fields.lastfm_user&&fields.lastfm_key){pollLastFm();setInterval(pollLastFm,5000);}
+});
+window.addEventListener('onSessionUpdate',function(e){
+  var d=e.detail||{}; if(d.fieldData){fields=Object.assign(fields,d.fieldData);applyAppearance();}
+});
+document.addEventListener('DOMContentLoaded',function(){
+  setTimeout(function(){
+    if(window.__np_started)return; applyAppearance(); if(artEl)artEl.src=DEFAULT_ART;
+    if(fields.lastfm_user&&fields.lastfm_key){pollLastFm();setInterval(pollLastFm,5000);}
+  },1500);
+});
+</script>
+
+<script>
+/* ============================================================
+   SETUP PAGE — StreamElements Auto-Install Logic
+   ============================================================ */
+
+'use strict';
+
+var _settings      = {};
+var _cachedCSS     = null;
+var _cachedJS      = null;
+var _overlayResult = null;
+
+/* ---- Read URL params ---- */
+function applyUrlParams() {
+  var p = new URLSearchParams(window.location.search);
+  _settings.user      = p.get('user')  || '';
+  _settings.key       = p.get('key')   || '';
+  _settings.theme     = p.get('theme') || 'dark';
+  _settings.shape     = p.get('shape') || 'default';
+  _settings.anim      = p.get('anim')  || 'ios';
+  _settings.fs        = p.get('fs')    || 'medium';
+  _settings.showBars  = p.get('bars')  !== '0';
+  _settings.showLabel = p.get('label') !== '0';
+  _settings.showAlbum = p.get('album') !== '0';
+}
+
+/* ---- Load widget files (fetch from repo, fallback to embedded) ---- */
+function loadWidgetFiles() {
+  var base = window.location.href.replace(/\/[^/]*$/, '');
+  var tryFetch = function(url) {
+    return fetch(url + '?_=' + Date.now())
+      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); });
+  };
+  Promise.all([
+    tryFetch(base + '/streamelements/widget.css').catch(function() { return null; }),
+    tryFetch(base + '/streamelements/widget.js').catch(function()  { return null; })
+  ]).then(function(results) {
+    _cachedCSS = results[0] || document.getElementById('embed-css').textContent.trim();
+    _cachedJS  = results[1] || document.getElementById('embed-js').textContent.trim();
+    buildPreview();
+  });
+}
+
+/* ---- Live preview ---- */
+function buildPreview() {
+  if (!_cachedCSS) return;
+  var bg = 'radial-gradient(circle at 22% 60%, rgba(110,38,200,0.38) 0%, transparent 46%),'
+         + 'radial-gradient(circle at 76% 28%, rgba(0,128,220,0.30) 0%, transparent 42%),'
+         + 'linear-gradient(160deg, #0a0c18 0%, #111827 100%)';
+
+  var css = _cachedCSS + '\nbody{background:' + bg + ';align-items:flex-start;justify-content:center;min-height:140px;padding-top:16px;overflow:visible;}\n';
+
+  var shapeMap = { pill: '60px', sharp: '6px', square: '0px' };
+  if (shapeMap[_settings.shape]) css += ':root{--np-radius:' + shapeMap[_settings.shape] + ';}\n';
+
+  var fsMap = { small: '12px', medium: '15px', large: '18px' };
+  var fs = fsMap[_settings.fs] || '15px';
+  css += ':root{--np-track-size:' + fs + ';--np-artist-size:' + (parseInt(fs)-3) + 'px;--np-album-size:' + (parseInt(fs)-5) + 'px;}';
+
+  var themeClass = _settings.theme !== 'dark' ? ' np-theme-' + _settings.theme : '';
+  var animClass  = (_settings.anim && _settings.anim !== 'ios') ? ' np-anim-' + _settings.anim : '';
+
+  var js = '(function(){'
+    + 'var c=document.getElementById("np-card");'
+    + 'var t=document.getElementById("np-track");'
+    + 'var a=document.getElementById("np-artist");'
+    + 'var al=document.getElementById("np-album");'
+    + 'var fill=document.getElementById("np-progress-fill");'
+    + 'var tm=document.getElementById("np-time");'
+    + 'var bars=document.getElementById("np-bars");'
+    + 'var lbl=document.getElementById("np-now-label");'
+    + 'var art=document.getElementById("np-art");'
+    + 'if(t)  t.textContent="Flowers";'
+    + 'if(a)  a.textContent="Miley Cyrus";'
+    + 'if(al) al.textContent="Endless Summer Vacation";'
+    + 'if(fill) fill.style.width="42%";'
+    + 'if(tm) tm.textContent="1:23 / 3:20";'
+    + 'if(bars) bars.style.display=' + (_settings.showBars  ? '"flex"' : '"none"') + ';'
+    + 'if(lbl)  lbl.style.display='  + (_settings.showLabel ? '""'     : '"none"') + ';'
+    + 'if(al)   al.style.display='   + (_settings.showAlbum ? '""'     : '"none"') + ';'
+    + 'if(art) art.src="https://lastfm.freetls.fastly.net/i/u/300x300/4128a6eb29f94943c9d206c08e625904.jpg";'
+    + 'if(c){'
+    +   'c.classList.remove("np-hidden");'
+    +   'c.classList.remove("np-notify-in","np-notify-out","np-track-bump");'
+    +   'void c.offsetWidth;'
+    +   'c.classList.add("np-notify-in");'
+    + '}'
+    + '})();';
+
+  var doc = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' + css + '</style></head>'
+    + '<body><div class="np-card np-hidden' + themeClass + animClass + '" id="np-card">'
+    + '<div class="np-art-wrap"><img id="np-art" src="" alt=""><img id="np-art-next" src="" alt="" style="opacity:0;position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></div>'
+    + '<div class="np-info">'
+    + '<div class="np-status" id="np-status"><div class="np-bars" id="np-bars"><div class="np-bar"></div><div class="np-bar"></div><div class="np-bar"></div><div class="np-bar"></div></div>'
+    + '<span class="np-now-label" id="np-now-label">Now Playing</span></div>'
+    + '<div class="np-track" id="np-track"></div><div class="np-artist" id="np-artist"></div><div class="np-album" id="np-album"></div>'
+    + '<div class="np-progress-wrap"><div class="np-progress-bar"><div class="np-progress-fill" id="np-progress-fill"></div></div><span class="np-time" id="np-time"></span></div>'
+    + '</div></div><script>' + js + '<\/script></body></html>';
+
+  document.getElementById('preview-frame').srcdoc = doc;
+}
+
+/* ---- Widget HTML for SE (body content only) ---- */
+function buildWidgetHtml() {
+  return '<div class="np-card np-hidden" id="np-card">\n'
+    + '  <div class="np-art-wrap">\n'
+    + '    <img id="np-art" src="" alt="Album Art">\n'
+    + '    <img id="np-art-next" src="" alt="">\n'
+    + '  </div>\n'
+    + '  <div class="np-info">\n'
+    + '    <div class="np-status" id="np-status">\n'
+    + '      <div class="np-bars" id="np-bars">\n'
+    + '        <div class="np-bar"></div><div class="np-bar"></div>\n'
+    + '        <div class="np-bar"></div><div class="np-bar"></div>\n'
+    + '      </div>\n'
+    + '      <span class="np-now-label" id="np-now-label">Now Playing</span>\n'
+    + '    </div>\n'
+    + '    <div class="np-track"  id="np-track"></div>\n'
+    + '    <div class="np-artist" id="np-artist"></div>\n'
+    + '    <div class="np-album"  id="np-album"></div>\n'
+    + '    <div class="np-progress-wrap">\n'
+    + '      <div class="np-progress-bar"><div class="np-progress-fill" id="np-progress-fill"></div></div>\n'
+    + '      <span class="np-time" id="np-time"></span>\n'
+    + '    </div>\n'
+    + '  </div>\n'
+    + '</div>';
+}
+
+/* ---- Build Fields array ---- */
+function buildFieldsArray() {
+  return [
+    { name: 'lastfm_user',   type: 'text',     label: 'Last.fm Benutzername',          value: _settings.user  || '' },
+    { name: 'lastfm_key',    type: 'text',     label: 'Last.fm API Key',                value: _settings.key   || '' },
+    { name: 'theme',         type: 'dropdown', label: 'Design / Theme',                 value: _settings.theme || 'dark',
+      options: { dark: 'Dark (Standard)', frosted: 'Frosted Glass', light: 'Light', minimal: 'Minimal', neon: 'Neon', liquid: 'Liquid Glass' } },
+    { name: 'shape',         type: 'dropdown', label: 'Widget Form',                    value: _settings.shape || 'default',
+      options: { default: 'Rund (Standard)', pill: 'Pille', sharp: 'Eckig', square: 'Quadratisch' } },
+    { name: 'animation',     type: 'dropdown', label: 'Einblend-Animation',             value: _settings.anim  || 'ios',
+      options: { ios: 'iOS Notification ✦', fade: 'Sanftes Einblenden', 'slide-left': 'Von links', 'slide-right': 'Von rechts', scale: 'Aufpoppen', 'slide-bottom': 'Von unten' } },
+    { name: 'font_size',     type: 'dropdown', label: 'Schriftgröße',                   value: _settings.fs    || 'medium',
+      options: { small: 'Klein', medium: 'Mittel', large: 'Groß' } },
+    { name: 'show_bars',     type: 'checkbox', label: 'EQ-Balken anzeigen',             value: _settings.showBars  !== false },
+    { name: 'show_label',    type: 'checkbox', label: '"Now Playing" Label anzeigen',   value: _settings.showLabel !== false },
+    { name: 'show_album',    type: 'checkbox', label: 'Album anzeigen',                 value: _settings.showAlbum !== false },
+    { name: 'custom_width',  type: 'number',   label: 'Breite (px, 0 = Standard)',      value: 0 },
+    { name: 'custom_radius', type: 'number',   label: 'Eckenradius (px, 0 = Standard)', value: 0 },
+    { name: 'custom_blur',   type: 'number',   label: 'Blur (px, 0 = Standard)',        value: 0 }
+  ];
+}
+
+/* ---- Build injected JS with user's settings baked in ---- */
+function buildInjectedJs() {
+  if (!_cachedJS) return '';
+  var js = _cachedJS;
+  js = js.replace("lastfm_user:   ''", "lastfm_user:   '" + (_settings.user  || '').replace(/'/g, "\\'") + "'");
+  js = js.replace("lastfm_key:    ''", "lastfm_key:    '" + (_settings.key   || '').replace(/'/g, "\\'") + "'");
+  js = js.replace("shape:         'default'", "shape:         '" + (_settings.shape || 'default') + "'");
+  js = js.replace("animation:     'ios'",     "animation:     '" + (_settings.anim  || 'ios')     + "'");
+  return js;
+}
+
+/* ---- State machine ---- */
+function setState(name) {
+  document.querySelectorAll('.state').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('state-' + name).classList.add('active');
+}
+function resetToInput() { setState('input'); }
+
+/* ---- Main: connect and create overlay via SE API ---- */
+function connectAndInstall() {
+  var token = (document.getElementById('inp-token').value || '').trim();
+  if (!token) {
+    var inp = document.getElementById('inp-token');
+    inp.focus(); inp.style.borderColor = '#ef4444';
+    setTimeout(function() { inp.style.borderColor = ''; }, 2000);
+    return;
+  }
+  if (!_cachedCSS || !_cachedJS) {
+    showError('Dateien werden noch geladen — bitte kurz warten und erneut versuchen.');
+    return;
+  }
+
+  setState('loading');
+
+  var injectedJs = buildInjectedJs();
+  var widgetData = {
+    lastfm_user:   _settings.user  || '',
+    lastfm_key:    _settings.key   || '',
+    theme:         _settings.theme || 'dark',
+    shape:         _settings.shape || 'default',
+    animation:     _settings.anim  || 'ios',
+    font_size:     _settings.fs    || 'medium',
+    show_bars:     _settings.showBars  !== false,
+    show_label:    _settings.showLabel !== false,
+    show_album:    _settings.showAlbum !== false,
+    custom_width:  0,
+    custom_radius: 0,
+    custom_blur:   0
+  };
+
+  var overlayBody = {
+    name:   'Now Playing Widget',
+    width:  1920,
+    height: 1080,
+    items: [
+      {
+        type:    'html',
+        name:    'Now Playing – Frosted Glass',
+        x: 0, y: 0,
+        width:   400,
+        height:  120,
+        visible: true,
+        locked:  false,
+        layer:   0,
+        muted:   false,
+        opacity: 100,
+        settings: {
+          type:   'html',
+          html:   buildWidgetHtml(),
+          css:    _cachedCSS,
+          js:     injectedJs,
+          fields: buildFieldsArray(),
+          data:   widgetData
+        }
+      }
+    ]
+  };
+
+  /* Step 1: verify token + get channel ID */
+  fetch('https://api.streamelements.com/kappa/v2/channels/me', {
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Accept': 'application/json'
+    }
+  })
+  .then(function(r) {
+    if (r.status === 401 || r.status === 403) throw { type: 'auth' };
+    if (!r.ok) throw { type: 'api', status: r.status };
+    return r.json();
+  })
+  .then(function(channel) {
+    var channelId = channel._id || channel.id;
+
+    /* Step 2: create overlay */
+    return fetch('https://api.streamelements.com/kappa/v2/overlays', {
+      method: 'POST',
+      headers: {
+        'Authorization':  'Bearer ' + token,
+        'Content-Type':   'application/json',
+        'Accept':         'application/json'
+      },
+      body: JSON.stringify(overlayBody)
+    })
+    .then(function(r) {
+      if (!r.ok) return r.text().then(function(t) { throw { type: 'create', status: r.status, body: t }; });
+      return r.json();
+    })
+    .then(function(overlay) {
+      var overlayId  = overlay._id || overlay.id;
+      var overlayUrl = 'https://streamelements.com/overlay/' + channelId + '/' + overlayId;
+      _overlayResult = { overlayUrl: overlayUrl, channelId: channelId, overlayId: overlayId };
+      document.getElementById('overlay-url-display').textContent = overlayUrl;
+      setState('success');
+    });
+  })
+  .catch(function(err) {
+    if (err && err.type === 'auth') {
+      showError('Ungültiger Token. Bitte prüfe ob du den richtigen Token aus dem StreamElements Dashboard (Account → Show Token) kopiert hast.');
+    } else if (err && err.type === 'api') {
+      showError('StreamElements API nicht erreichbar (Status ' + err.status + '). Bitte versuche es in einigen Minuten erneut.');
+    } else if (err && err.type === 'create') {
+      showError('Overlay konnte nicht angelegt werden (Status ' + err.status + '). Bitte probiere die JSON-Download-Option.');
+    } else if (err && (err.message === 'Failed to fetch' || (err.message && err.message.indexOf('NetworkError') !== -1))) {
+      showError('Keine Verbindung zur StreamElements API. Mögliche Ursache: Browser blockiert die Verbindung (CORS/Firewall). Bitte nutze die JSON-Download-Option.');
+    } else {
+      showError('Unbekannter Fehler: ' + (err && err.message ? err.message : JSON.stringify(err)));
+    }
+  });
+}
+
+function showError(msg) {
+  document.getElementById('error-msg-text').textContent = msg;
+  setState('error');
+}
+
+/* ---- Copy overlay URL ---- */
+function copyOverlayUrl() {
+  var url = _overlayResult && _overlayResult.overlayUrl;
+  if (!url) return;
+  navigator.clipboard.writeText(url).then(function() {
+    var el = document.getElementById('overlay-url-display');
+    var orig = el.textContent;
+    el.textContent = '✓ Kopiert!';
+    el.style.color = '#22c55e';
+    setTimeout(function() { el.textContent = orig; el.style.color = ''; }, 1800);
+  });
+}
+
+/* ---- Open SE dashboard ---- */
+function openSeDashboard() {
+  window.open('https://streamelements.com/dashboard/overlays', '_blank');
+}
+
+/* ---- Fallback: download overlay JSON ---- */
+function downloadSeOverlay() {
+  if (!_cachedCSS || !_cachedJS) return;
+  var injectedJs = buildInjectedJs();
+  var overlay = {
+    type: 'overlay', name: 'Now Playing Widget', width: 1920, height: 1080,
+    settings: {},
+    items: [{
+      _id: Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10),
+      type: 'html', name: 'Now Playing – Frosted Glass',
+      x: 0, y: 0, width: 400, height: 120,
+      visible: true, locked: false, layer: 0, muted: false, opacity: 100,
+      flip: {x:false,y:false}, crop: {top:0,right:0,bottom:0,left:0},
+      border: {}, shadow: {}, groupId: null,
+      settings: {
+        type: 'html',
+        html: buildWidgetHtml(),
+        css:  _cachedCSS,
+        js:   injectedJs,
+        fields: buildFieldsArray(),
+        data: {
+          lastfm_user: _settings.user||'', lastfm_key: _settings.key||'',
+          theme: _settings.theme||'dark', shape: _settings.shape||'default',
+          animation: _settings.anim||'ios', font_size: _settings.fs||'medium',
+          show_bars: _settings.showBars!==false, show_label: _settings.showLabel!==false,
+          show_album: _settings.showAlbum!==false,
+          custom_width: 0, custom_radius: 0, custom_blur: 0
+        }
+      }
+    }]
+  };
+  var blob = new Blob([JSON.stringify(overlay, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'now-playing-overlay.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ---- Init ---- */
+applyUrlParams();
+loadWidgetFiles();
+</script>
+</body>
+</html>
