@@ -1058,10 +1058,11 @@ function connectAndInstall() {
   });
 
   channelPromise.then(function(channel) {
-    var channelId = channel ? (channel._id || channel.id) : null;
+    var channelId = channel ? (channel._id || channel.id || channel.username) : null;
+    if (!channelId) { throw { type: 'no-channel', diag: _channelDiag }; }
 
-    /* Step 2: create overlay */
-    return fetch('https://api.streamelements.com/kappa/v2/overlays', {
+    /* Step 2: create overlay — SE API requires channelId in path */
+    return fetch('https://api.streamelements.com/kappa/v2/overlays/' + channelId, {
       method: 'POST',
       headers: {
         'Authorization':  'Bearer ' + token,
@@ -1097,6 +1098,8 @@ function connectAndInstall() {
     var diag = _channelDiag ? '\n\n[Diagnose: ' + _channelDiag + ']' : '';
     if (err && err.type === 'auth') {
       showError('Ungültiger Token. Bitte kopiere den JWT-Token aus dem StreamElements Dashboard: Account → Show Token (nicht die OBS-Browser-Source-URL!).' + diag);
+    } else if (err && err.type === 'no-channel') {
+      showError('Channel-ID konnte nicht ermittelt werden. Bitte versuche es erneut oder prüfe ob dein SE-Account mit Twitch/YouTube verbunden ist.' + diag);
     } else if (err && err.type === 'create') {
       var bodySnip = err.body ? err.body.slice(0, 200) : '—';
       showError('SE API Status ' + err.status + ': ' + bodySnip + diag);
