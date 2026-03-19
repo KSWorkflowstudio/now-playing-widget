@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💬 Twitch Chat Widget – StreamElements Einrichtung</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0b0d14;
+  color: #e2e8f0;
+  min-height: 100vh;
+  padding: 32px 16px 72px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+p  { color: #94a3b8; font-size: 0.87rem; line-height: 1.6; }
+a  { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.wrap { width: 100%; max-width: 520px; }
+
+/* Header */
+.page-header { text-align: center; margin-bottom: 26px; }
+.page-header h1 { font-size: 1.45rem; font-weight: 700; margin-bottom: 4px; }
+.page-header p  { color: #64748b; font-size: 0.88rem; }
+.badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #9147ff, #bf94ff);
+  color: #fff; font-size: 0.68rem; font-weight: 700;
+  padding: 2px 9px; border-radius: 99px;
+  margin-left: 7px; vertical-align: middle;
+}
+
+/* Preview */
+.preview-hero {
+  background: radial-gradient(circle at 18% 55%, rgba(100,30,200,0.40) 0%, transparent 44%),
+              radial-gradient(circle at 78% 25%, rgba(0,110,230,0.32) 0%, transparent 40%),
+              linear-gradient(160deg, #08091a 0%, #0e1323 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.07);
+  margin-bottom: 20px;
+  padding: 22px 16px 18px;
+  display: flex; flex-direction: column; align-items: flex-start;
+  min-height: 260px;
+  position: relative;
+  overflow: hidden;
+}
+.preview-label {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: rgba(255,255,255,0.22);
+  margin-bottom: 14px; width: 100%;
+}
+.preview-msgs {
+  display: flex; flex-direction: column; gap: 8px;
+  width: 100%;
+}
+/* Mini chat bubble previews */
+.preview-row { display: flex; align-items: flex-start; gap: 9px; }
+.preview-av {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: #fff;
+  flex-shrink: 0; border: 1.5px solid rgba(255,255,255,0.15);
+  overflow: hidden;
+}
+.preview-av img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.preview-bubble {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 4px 12px 12px 12px;
+  padding: 6px 10px 7px;
+  max-width: calc(100% - 42px);
+}
+.preview-meta { display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
+.preview-name { font-size: 11px; font-weight: 700; }
+.preview-pill {
+  font-size: 8px; font-weight: 700; text-transform: uppercase;
+  padding: 1px 5px; border-radius: 99px;
+}
+.pill-mod      { background: rgba(0,173,89,0.18);   color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+.pill-vip      { background: rgba(255,0,128,0.15);  color: #f472b6; border: 1px solid rgba(244,114,182,0.3); }
+.pill-sub      { background: rgba(145,71,255,0.15); color: #a78bfa; border: 1px solid rgba(167,139,250,0.3); }
+.pill-streamer { background: rgba(255,200,50,0.18); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+.preview-text  { font-size: 12px; color: rgba(255,255,255,0.88); line-height: 1.45; }
+
+/* Card */
+.card {
+  background: #161824;
+  border: 1px solid #252840;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+.card-title { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 16px; }
+
+/* States */
+.state { display: none; }
+.state.active { display: block; }
+
+/* Form */
+label { display: block; font-size: 0.8rem; color: #8892a4; margin-bottom: 6px; font-weight: 500; }
+input[type="text"], input[type="password"] {
+  width: 100%; padding: 10px 12px;
+  background: #0b0d14; border: 1px solid #252840;
+  border-radius: 8px; color: #e2e8f0; font-size: 0.85rem;
+  outline: none; transition: border-color 0.18s;
+  font-family: 'Fira Code', 'Cascadia Code', monospace;
+}
+input:focus { border-color: #9147ff; box-shadow: 0 0 0 3px rgba(145,71,255,0.15); }
+.field { margin-bottom: 16px; }
+.field-hint { font-size: 0.75rem; color: #475569; margin-top: 5px; line-height: 1.55; }
+
+/* Mini steps */
+.mini-steps {
+  background: #0f1119;
+  border: 1px solid #1c1f30;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.mini-step {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #1c1f30;
+  font-size: 0.82rem; color: #94a3b8; line-height: 1.5;
+}
+.mini-step:last-child { border-bottom: none; }
+.mini-step-n {
+  flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+  background: #252840; color: #bf94ff;
+  font-size: 0.7rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; margin-top: 1px;
+}
+.mini-step strong { color: #e2e8f0; }
+
+/* Screenshot helper */
+.token-screenshot {
+  background: #0f1119;
+  border: 1px solid #1c1f30;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  font-size: 0.8rem; color: #64748b; line-height: 1.6;
+}
+.token-screenshot strong { color: #e2e8f0; }
+.token-col-highlight {
+  display: inline-block;
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.30);
+  border-radius: 5px;
+  padding: 2px 8px;
+  color: #fca5a5;
+  font-family: monospace;
+  font-size: 0.8rem;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 11px 20px; border-radius: 9px; border: none;
+  font-size: 0.88rem; font-weight: 600; cursor: pointer;
+  transition: opacity 0.18s, transform 0.1s; width: 100%;
+}
+.btn:active { transform: scale(0.98); }
+.btn-primary   { background: linear-gradient(135deg, #9147ff, #bf94ff); color: #fff; }
+.btn-secondary { background: #252840; color: #e2e8f0; }
+.btn-ghost     { background: transparent; color: #64748b; border: 1px solid #252840; }
+.btn:hover { opacity: 0.88; }
+.btn + .btn { margin-top: 9px; }
+
+/* Loading */
+.spinner {
+  width: 38px; height: 38px;
+  border: 3px solid #252840; border-top-color: #9147ff;
+  border-radius: 50%;
+  animation: spin 0.72s linear infinite;
+  margin: 8px auto 18px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Success */
+.success-icon  { font-size: 2.6rem; text-align: center; margin-bottom: 10px; }
+.success-title { font-size: 1.1rem; font-weight: 700; color: #fff; text-align: center; margin-bottom: 4px; }
+.success-sub   { text-align: center; color: #64748b; font-size: 0.84rem; margin-bottom: 18px; }
+.overlay-url-box {
+  background: #0b0d14; border: 1px solid #252840; border-radius: 8px;
+  padding: 10px 13px; font-family: monospace; font-size: 0.77rem; color: #a5b4fc;
+  word-break: break-all; margin: 10px 0 4px; cursor: pointer;
+  transition: border-color 0.15s;
+}
+.overlay-url-box:hover { border-color: #9147ff; }
+.copy-hint { font-size: 0.71rem; color: #334155; text-align: center; margin-bottom: 14px; }
+
+/* Error */
+.error-icon { font-size: 2.2rem; text-align: center; margin-bottom: 10px; }
+.error-msg {
+  font-size: 0.83rem; color: #f87171;
+  background: rgba(239,68,68,0.09); border: 1px solid rgba(239,68,68,0.22);
+  border-radius: 8px; padding: 11px 14px; margin-bottom: 14px; line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+/* Notice */
+.notice {
+  background: rgba(145,71,255,0.10); border: 1px solid rgba(145,71,255,0.22);
+  border-radius: 8px; padding: 11px 14px; font-size: 0.8rem; color: #c4b5fd;
+  margin-top: 14px; line-height: 1.55;
+}
+.divider { border: none; border-top: 1px solid #252840; margin: 16px 0; }
+code { background: #0f1117; padding: 1px 5px; border-radius: 3px; font-size: 0.85em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- Header -->
+<div class="page-header">
+  <h1>💬 Twitch Chat Widget <span class="badge">v1.0</span></h1>
+  <p>StreamElements Einrichtung &middot; 2 Schritte, kein Code</p>
+</div>
+
+<!-- Static preview -->
+<div class="preview-hero">
+  <div class="preview-label">Vorschau</div>
+  <div class="preview-msgs">
+    <div class="preview-row">
+      <div class="preview-av" style="background:#f59e0b">S</div>
+      <div class="preview-bubble">
+        <div class="preview-meta">
+          <span class="preview-name" style="color:#f59e0b">StreamerFan92</span>
+          <span class="preview-pill pill-streamer">Streamer</span>
+        </div>
+        <div class="preview-text">Hype hype hype!! PogChamp</div>
+      </div>
+    </div>
+    <div class="preview-row">
+      <div class="preview-av" style="background:#54a0ff">L</div>
+      <div class="preview-bubble">
+        <div class="preview-meta">
+          <span class="preview-name" style="color:#54a0ff">LunaPlays</span>
+          <span class="preview-pill pill-mod">Mod</span>
+        </div>
+        <div class="preview-text">Was ein krasser Stream heute! 🔥</div>
+      </div>
+    </div>
+    <div class="preview-row">
+      <div class="preview-av" style="background:#a29bfe">x</div>
+      <div class="preview-bubble">
+        <div class="preview-meta">
+          <span class="preview-name" style="color:#a29bfe">xXDarkWolfXx</span>
+          <span class="preview-pill pill-vip">VIP</span>
+        </div>
+        <div class="preview-text">gg ez keine chance gehabt LUL</div>
+      </div>
+    </div>
+    <div class="preview-row">
+      <div class="preview-av" style="background:#00d2d3">c</div>
+      <div class="preview-bubble">
+        <div class="preview-meta">
+          <span class="preview-name" style="color:#00d2d3">cozyvibes</span>
+          <span class="preview-pill pill-sub">Sub</span>
+        </div>
+        <div class="preview-text">Wann kommt der nächste Drop?</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Setup card -->
+<div class="card">
+
+  <!-- STATE: Input -->
+  <div class="state active" id="state-input">
+    <div class="card-title">🔗 Widget in StreamElements anlegen</div>
+
+    <div class="mini-steps">
+      <div class="mini-step">
+        <div class="mini-step-n">1</div>
+        <div>Öffne <a href="https://streamelements.com/dashboard/account/channels" target="_blank" rel="noopener"><strong>StreamElements → Account → Channels</strong></a></div>
+      </div>
+      <div class="mini-step">
+        <div class="mini-step-n">2</div>
+        <div>Kopiere deinen <strong>JWT Token</strong> (nicht den Overlay Token)</div>
+      </div>
+      <div class="mini-step">
+        <div class="mini-step-n">3</div>
+        <div>Token unten einfügen → <strong>„Widget anlegen"</strong> klicken</div>
+      </div>
+    </div>
+
+    <!-- Token location hint -->
+    <div class="token-screenshot">
+      <strong>Wo findest du den JWT Token?</strong><br>
+      StreamElements → Account → Channels-Tab → Spalte <span class="token-col-highlight">JWT Token</span> → Kopier-Symbol klicken
+    </div>
+
+    <div class="field">
+      <label for="inp-token">StreamElements JWT Token</label>
+      <input type="password" id="inp-token"
+        placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…"
+        autocomplete="off" spellcheck="false">
+      <div class="field-hint">
+        Der Token bleibt lokal in deinem Browser — er wird nicht gespeichert oder weitergegeben.
+        <a href="https://streamelements.com/dashboard/account/channels" target="_blank" rel="noopener">→ Zum SE Account</a>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="connectAndInstall()">
+      💬 Widget in StreamElements anlegen
+    </button>
+
+    <div class="notice">
+      Das Widget wird direkt in deinem StreamElements-Account angelegt. Theme, Schriftgröße, Auto-Ausblenden und mehr kannst du danach im <strong>Fields-Tab</strong> in SE anpassen — ohne Code.
+    </div>
+  </div>
+
+  <!-- STATE: Loading -->
+  <div class="state" id="state-loading">
+    <div class="spinner"></div>
+    <p style="text-align:center;color:#64748b;font-size:0.88rem">Widget wird in StreamElements angelegt…</p>
+  </div>
+
+  <!-- STATE: Success -->
+  <div class="state" id="state-success">
+    <div class="success-icon">🎉</div>
+    <div class="success-title">Chat Widget angelegt!</div>
+    <p class="success-sub">Das Widget ist jetzt in deinem StreamElements-Account.</p>
+
+    <hr class="divider">
+
+    <p style="font-size:0.82rem;font-weight:600;color:#94a3b8;margin-bottom:6px">Overlay-Link für OBS Browser Source:</p>
+    <div class="overlay-url-box" id="overlay-url-display" onclick="copyOverlayUrl()">—</div>
+    <div class="copy-hint" id="overlay-url-copy-hint">Klicken zum Kopieren</div>
+
+    <button class="btn btn-primary" onclick="window.open('https://streamelements.com/dashboard/overlays','_blank')">
+      🎬 In StreamElements öffnen
+    </button>
+
+    <div class="notice" style="margin-top:14px">
+      <strong>OBS Browser Source:</strong> Breite <code>400</code> &middot; Höhe <code>600</code> &middot; Eigenes CSS: <code style="color:#f0abfc">body{background:rgba(0,0,0,0)}</code><br>
+      <span style="color:#9147ff;opacity:0.9">„Quelle ausblenden wenn nicht sichtbar" → AUS lassen</span>
+    </div>
+
+    <hr class="divider">
+
+    <div class="mini-steps">
+      <div class="mini-step">
+        <div class="mini-step-n">1</div>
+        <div>In SE: <strong>My Overlays → Chat Widget</strong> öffnen → <strong>Launch</strong></div>
+      </div>
+      <div class="mini-step">
+        <div class="mini-step-n">2</div>
+        <div>URL kopieren → in OBS als <strong>Browser Source</strong> einfügen (400 × 600 px)</div>
+      </div>
+      <div class="mini-step">
+        <div class="mini-step-n">3</div>
+        <div><strong>Fields-Tab</strong> → Theme, Schriftgröße, max. Nachrichten, Auto-Ausblenden einstellen</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATE: Error -->
+  <div class="state" id="state-error">
+    <div class="error-icon">⚠️</div>
+    <div class="error-msg" id="error-msg-text"></div>
+    <button class="btn btn-secondary" onclick="resetToInput()">← Zurück &amp; Token prüfen</button>
+  </div>
+
+</div><!-- /.card -->
+
+<!-- Footer -->
+<p style="text-align:center;color:#334155;font-size:0.73rem">
+  © 2025 · Frosted Glass Widgets ·
+  <a href="./setup.html" style="color:#334155">Now Playing Widget</a>
+</p>
+
+</div><!-- /.wrap -->
+
+<script>
+/* ============================================================
+   SETUP-CHAT — SE API install for Twitch Chat Widget
+   ============================================================ */
+
+var BASE_URL   = 'https://ksworkflowstudio.github.io/now-playing-widget';
+var _cachedCSS = null;
+var _cachedJS  = null;
+var _overlayResult = null;
+
+/* ---- Fetch widget assets on load ---- */
+function tryFetch(url) {
+  return fetch(url + '?v=' + Date.now()).then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.text();
+  });
+}
+
+window.addEventListener('load', function() {
+  Promise.all([
+    tryFetch(BASE_URL + '/chat/widget.css').catch(function() { return null; }),
+    tryFetch(BASE_URL + '/chat/widget.js').catch(function()  { return null; })
+  ]).then(function(results) {
+    _cachedCSS = results[0];
+    _cachedJS  = results[1];
+  });
+});
+
+/* ---- Widget HTML (fragment SE uses) ---- */
+function buildWidgetHtml() {
+  return '<div class="chat-widget chat-hidden" id="chat-widget">\n'
+       + '  <div class="chat-header-bar">\n'
+       + '    <div class="chat-header-icon"></div>\n'
+       + '    <span class="chat-header-label">Twitch Chat</span>\n'
+       + '  </div>\n'
+       + '  <div class="chat-messages" id="chat-messages"></div>\n'
+       + '</div>';
+}
+
+/* ---- Fields array ---- */
+function buildFieldsObj() {
+  var f = {};
+  var defs = [
+    { name: 'theme',           type: 'dropdown', label: 'Design / Theme',                                      value: 'dark',
+      options: { dark: 'Dark (Standard)', frosted: 'Frosted Glass', light: 'Light', minimal: 'Minimal', neon: 'Neon', liquid: 'Liquid Glass \u2728' } },
+    { name: 'font_size',       type: 'dropdown', label: 'Schriftgröße',                                        value: 'medium',
+      options: { small: 'Klein (12px)', medium: 'Mittel (14px)', large: 'Groß (16px)' } },
+    { name: 'max_messages',    type: 'number',   label: 'Max. sichtbare Nachrichten',                          value: 6 },
+    { name: 'auto_hide_secs',  type: 'number',   label: 'Auto-Ausblenden nach X Sekunden (0 = immer sichtbar)', value: 0 },
+    { name: 'show_avatar',     type: 'checkbox', label: 'Profilbild / Avatar anzeigen',                        value: true },
+    { name: 'show_badges',     type: 'checkbox', label: 'Abzeichen (Badges) anzeigen',                        value: true },
+    { name: 'show_role',       type: 'checkbox', label: 'Benutzerrolle anzeigen (Mod, VIP, Sub, Streamer)',    value: true },
+    { name: 'show_timestamp',  type: 'checkbox', label: 'Uhrzeit anzeigen',                                   value: false },
+    { name: 'show_header',     type: 'checkbox', label: '"Twitch Chat" Header anzeigen',                      value: true },
+    { name: 'transparent_bg',  type: 'checkbox', label: 'Hintergrund transparent (nur Bubbles sichtbar)',      value: true }
+  ];
+  defs.forEach(function(d) {
+    var fd = { type: d.type, label: d.label, value: d.value };
+    if (d.options) fd.options = d.options;
+    f[d.name] = fd;
+  });
+  return f;
+}
+
+/* ---- SE widget item ---- */
+function buildSeWidgetItem() {
+  var fieldsObj = buildFieldsObj();
+  return {
+    id: 1, group: null, version: 1,
+    type: 'se-widget-custom-event-list',
+    name: 'Twitch Chat Widget',
+    visible: true, locked: false,
+    listener: null, listeners: {},
+    css: { 'z-index': 1, top: '0px', left: '0px', width: '400px', height: '600px', opacity: 1 },
+    text:  { type: 'text',  value: null },
+    image: { type: 'image', css: { 'max-width': '100%' } },
+    video: { type: 'video', volume: 0.5, css: { width: 320, height: 240 } },
+    audio: { volume: 1 },
+    animation: { in: 'fadeIn', inDuration: 1, out: 'fadeOut', outDuration: 1, timeout: 6 },
+    variables: {
+      html:      buildWidgetHtml(),
+      css:       _cachedCSS || '',
+      js:        _cachedJS  || '',
+      fields:    JSON.stringify(fieldsObj),
+      fieldData: {
+        theme: 'dark', font_size: 'medium', max_messages: 6,
+        auto_hide_secs: 0, show_avatar: true, show_badges: true,
+        show_role: true, show_timestamp: false, show_header: true,
+        transparent_bg: true
+      },
+      expanded:  false,
+      uid:       Math.random().toString(36).slice(2, 10)
+    },
+    provider: 'twitch'
+  };
+}
+
+/* ---- State machine ---- */
+function setState(name) {
+  document.querySelectorAll('.state').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('state-' + name).classList.add('active');
+}
+function resetToInput() { setState('input'); }
+
+function showError(msg) {
+  console.error('[Chat-Widget setup error]', msg);
+  document.getElementById('error-msg-text').textContent = msg;
+  setState('error');
+}
+
+/* ---- Copy overlay URL ---- */
+function copyOverlayUrl() {
+  if (!_overlayResult) return;
+  navigator.clipboard.writeText(_overlayResult.overlayUrl).then(function() {
+    var el = document.getElementById('overlay-url-copy-hint');
+    el.textContent = '✓ Kopiert!';
+    el.style.color = '#22c55e';
+    setTimeout(function() { el.textContent = 'Klicken zum Kopieren'; el.style.color = ''; }, 2000);
+  }).catch(function() {});
+}
+
+/* ---- Main: connect and create overlay ---- */
+function connectAndInstall() {
+  var token = (document.getElementById('inp-token').value || '').trim();
+  if (!token) {
+    var inp = document.getElementById('inp-token');
+    inp.focus(); inp.style.borderColor = '#ef4444';
+    setTimeout(function() { inp.style.borderColor = ''; }, 2000);
+    return;
+  }
+  if (!_cachedCSS || !_cachedJS) {
+    showError('Dateien werden noch geladen — bitte kurz warten und erneut versuchen.');
+    return;
+  }
+
+  setState('loading');
+
+  var seWidgetItem = buildSeWidgetItem();
+  var _channelDiag = null;
+
+  /* Step 1: get channel ID */
+  fetch('https://api.streamelements.com/kappa/v2/channels/me', {
+    headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
+  })
+  .then(function(r) {
+    if (r.status === 401 || r.status === 403) throw { type: 'auth' };
+    if (!r.ok) return r.text().then(function(t) { _channelDiag = 'channels/me → ' + r.status + ' ' + t; return null; });
+    return r.json();
+  })
+  .catch(function(err) {
+    if (err && err.type === 'auth') throw err;
+    _channelDiag = 'channels/me → ' + (err && err.message ? err.message : String(err));
+    return null;
+  })
+  .then(function(channel) {
+    var channelId = channel ? (channel._id || channel.id || channel.username) : null;
+    if (!channelId) throw { type: 'no-channel', diag: _channelDiag };
+
+    var authHeaders = {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type':  'application/json',
+      'Accept':        'application/json'
+    };
+
+    /* Step 2: create overlay shell */
+    return fetch('https://api.streamelements.com/kappa/v2/overlays/' + channelId, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({ name: 'Twitch Chat Widget', width: 1920, height: 1080 })
+    })
+    .then(function(r) {
+      if (r.status === 401 || r.status === 403) throw { type: 'auth' };
+      if (!r.ok) return r.text().then(function(t) { throw { type: 'create', status: r.status, body: t }; });
+      return r.json();
+    })
+    .then(function(overlay) {
+      var overlayId = overlay._id || overlay.id;
+
+      /* Step 3: PUT with widget content */
+      var putBody = JSON.parse(JSON.stringify(overlay));
+      putBody.widgets = [seWidgetItem];
+      delete putBody.__v;
+      delete putBody.updatedAt;
+      delete putBody.createdAt;
+
+      return fetch('https://api.streamelements.com/kappa/v2/overlays/' + channelId + '/' + overlayId, {
+        method: 'PUT',
+        headers: authHeaders,
+        body: JSON.stringify(putBody)
+      })
+      .then(function(r) {
+        if (r.status === 401 || r.status === 403) throw { type: 'auth' };
+        if (!r.ok) return r.text().then(function(t) { throw { type: 'update', status: r.status, body: t }; });
+        return r.json().catch(function() { return overlay; });
+      })
+      .then(function() {
+        var overlayUrl = 'https://streamelements.com/overlay/' + channelId + '/' + overlayId;
+        _overlayResult = { overlayUrl: overlayUrl, channelId: channelId, overlayId: overlayId };
+        document.getElementById('overlay-url-display').textContent = overlayUrl;
+        setState('success');
+      });
+    });
+  })
+  .catch(function(err) {
+    var diag = _channelDiag ? '\n\n[Diagnose: ' + _channelDiag + ']' : '';
+    if (err && err.type === 'auth') {
+      showError('Ungültiger Token. Bitte kopiere den JWT Token aus: StreamElements → Account → Channels → JWT Token.' + diag);
+    } else if (err && err.type === 'no-channel') {
+      showError('Channel-ID konnte nicht ermittelt werden. Prüfe ob dein SE-Account mit Twitch verbunden ist.' + diag);
+    } else if (err && (err.type === 'create' || err.type === 'update')) {
+      showError('SE API Status ' + err.status + ': ' + (err.body || '').slice(0, 200) + diag);
+    } else if (err && err.message && (err.message === 'Failed to fetch' || err.message.indexOf('NetworkError') !== -1)) {
+      showError('Keine Verbindung zur StreamElements API. Prüfe deine Internetverbindung.' + diag);
+    } else {
+      showError('Fehler: ' + (err && err.message ? err.message : JSON.stringify(err)) + diag);
+    }
+  });
+}
+</script>
+</body>
+</html>
