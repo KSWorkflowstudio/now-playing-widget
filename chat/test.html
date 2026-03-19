@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="widget.css">
+<style>
+  body { background: linear-gradient(135deg,#1a1040 0%,#0a1830 100%); padding: 20px; min-height: 100vh; }
+</style>
+</head>
+<body>
+<div class="chat-widget chat-hidden" id="chat-widget">
+  <div class="chat-header-bar">
+    <div class="chat-header-icon"></div>
+    <span class="chat-header-label">Twitch Chat</span>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+</div>
+<script src="widget.js"></script>
+<script>
+window.addEventListener('load', function() {
+  window.dispatchEvent(new CustomEvent('onWidgetLoad', { detail: { fieldData: {
+    theme: 'dark', font_size: 'medium', max_messages: 6,
+    show_avatar: true, show_badges: true, show_role: true,
+    show_timestamp: false, show_header: true,
+    auto_hide_secs: 0, transparent_bg: true,
+    font_color: 'rgba(255,255,255,0.90)'
+  }}}));
+
+  var testEvents = [
+    { name: 'StreamerFan92', displayName: 'StreamerFan92', text: 'Hype hype hype!! PogChamp',
+      badges: [{ type: 'broadcaster', url: 'https://static-cdn.jtvnw.net/badges/v1/5527c58c-fb7d-422d-b71b-f309dcb85cc1/1' }], tags: { color: '#f59e0b' } },
+    { name: 'LunaPlays', displayName: 'LunaPlays', text: 'Was ein krasser Stream heute!',
+      badges: [{ type: 'moderator', url: 'https://static-cdn.jtvnw.net/badges/v1/3267646d-33f0-4b17-b3df-f923a41db1d0/1' }], tags: { color: '#54a0ff' } },
+    { name: 'xXDarkWolfXx', displayName: 'xXDarkWolfXx', text: 'gg ez keine chance LUL',
+      badges: [{ type: 'vip', url: 'https://static-cdn.jtvnw.net/badges/v1/b817aba4-fad8-49e2-b88a-7cc744dfa6ec/1' }], tags: { color: '#a29bfe' } },
+    { name: 'cozyvibes', displayName: 'cozyvibes', text: 'Wann kommt der naechste Drop?',
+      badges: [{ type: 'subscriber', url: 'https://static-cdn.jtvnw.net/badges/v1/5d9f2208-5dd8-11e7-8513-2ff4adfae661/1' }], tags: { color: '#00d2d3' } },
+    { name: 'TwitchUser', displayName: 'TwitchUser', text: 'Erster Kommentar seit 3h xD',
+      badges: [], tags: { color: '' } }
+  ];
+  testEvents.forEach(function(ev, i) {
+    setTimeout(function() {
+      window.dispatchEvent(new CustomEvent('onEventReceived', { detail: { listener: 'message', event: ev }}));
+    }, 400 + i * 400);
+  });
+});
+</script>
+</body></html>

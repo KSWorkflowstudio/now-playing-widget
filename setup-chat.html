@@ -423,8 +423,9 @@ function buildFieldsObj() {
   var defs = [
     { name: 'theme',           type: 'dropdown', label: 'Design / Theme',                                      value: 'dark',
       options: { dark: 'Dark (Standard)', frosted: 'Frosted Glass', light: 'Light', minimal: 'Minimal', neon: 'Neon', liquid: 'Liquid Glass \u2728' } },
-    { name: 'font_size',       type: 'dropdown', label: 'Schriftgröße',                                        value: 'medium',
+    { name: 'font_size',       type: 'dropdown',    label: 'Schriftgröße',                                        value: 'medium',
       options: { small: 'Klein (12px)', medium: 'Mittel (14px)', large: 'Groß (16px)' } },
+    { name: 'font_color',      type: 'colorpicker', label: 'Schriftfarbe (Nachrichtentext)',                      value: 'rgba(255,255,255,0.90)' },
     { name: 'max_messages',    type: 'number',   label: 'Max. sichtbare Nachrichten',                          value: 6 },
     { name: 'auto_hide_secs',  type: 'number',   label: 'Auto-Ausblenden nach X Sekunden (0 = immer sichtbar)', value: 0 },
     { name: 'show_avatar',     type: 'checkbox', label: 'Profilbild / Avatar anzeigen',                        value: true },

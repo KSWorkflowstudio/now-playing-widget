@@ -22,6 +22,11 @@
       "large":  "Groß (16px)"
     }
   },
+  "font_color": {
+    "type": "colorpicker",
+    "label": "Schriftfarbe (Nachrichtentext)",
+    "value": "rgba(255,255,255,0.90)"
+  },
   "max_messages": {
     "type": "number",
     "label": "Max. sichtbare Nachrichten",
