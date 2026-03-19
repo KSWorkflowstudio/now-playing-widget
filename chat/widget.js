@@ -116,14 +116,22 @@ function resetHideTimer() {
 }
 
 /* ---- Async Twitch avatar loader — fetches real jtvnw.net URL via decapi.me ---- */
-function loadTwitchAvatar(uname, imgEl) {
+function loadTwitchAvatar(uname, wrapEl) {
+  function applyUrl(url) {
+    if (!url || !wrapEl.parentNode) return;
+    var img = document.createElement('img');
+    img.className = 'chat-avatar-img';
+    img.alt = '';
+    img.onerror = function() { this.style.display = 'none'; };
+    img.onload  = function() { wrapEl.classList.remove('chat-avatar-fallback'); };
+    img.src = url;
+    wrapEl.insertBefore(img, wrapEl.firstChild);
+  }
+
   if (_avatarCache[uname] !== undefined) {
-    if (_avatarCache[uname] && imgEl.parentNode) {
-      imgEl.src = _avatarCache[uname];
-    }
+    applyUrl(_avatarCache[uname]);
     return;
   }
-  /* Mark as in-flight to avoid duplicate requests */
   _avatarCache[uname] = '';
   fetch('https://decapi.me/twitch/avatar/' + uname)
     .then(function(r) { return r.text(); })
@@ -131,9 +139,7 @@ function loadTwitchAvatar(uname, imgEl) {
       url = (url || '').trim();
       var valid = url && url.indexOf('http') === 0 && url.indexOf('Error') === -1;
       _avatarCache[uname] = valid ? url : '';
-      if (valid && imgEl.parentNode) {
-        imgEl.src = url;
-      }
+      applyUrl(_avatarCache[uname]);
     })
     .catch(function() { _avatarCache[uname] = ''; });
 }
@@ -186,10 +192,10 @@ function addMessage(data) {
   var avatarHtml = '';
   if (fields.show_avatar) {
     var seAvatar = data.avatar || data.profileImage || data.profile_image_url || '';
+    /* Start in fallback state (shows initial letter); image injected once URL is ready */
     avatarHtml =
-      '<div class="chat-avatar chat-avatar-wrap" style="background:' + avatarBg + '" title="' + esc(displayName) + '">' +
-        '<img class="chat-avatar-img" data-uname="' + uname + '" src="' + seAvatar + '" alt="" ' +
-          'onerror="this.style.display=\'none\';this.parentNode.classList.add(\'chat-avatar-fallback\')">' +
+      '<div class="chat-avatar chat-avatar-wrap chat-avatar-fallback" data-uname="' + uname + '" style="background:' + avatarBg + '" title="' + esc(displayName) + '">' +
+        (seAvatar ? '<img class="chat-avatar-img" src="' + seAvatar + '" alt="" onerror="this.style.display=\'none\'">' : '') +
         '<span class="chat-avatar-initial">' + initial + '</span>' +
       '</div>';
   }
@@ -218,9 +224,9 @@ function addMessage(data) {
 
   /* Async-load real Twitch profile picture if SE didn't supply one */
   if (fields.show_avatar && uname) {
-    var imgEl = msgEl.querySelector('.chat-avatar-img');
-    if (imgEl && !imgEl.getAttribute('src')) {
-      loadTwitchAvatar(uname, imgEl);
+    var wrapEl = msgEl.querySelector('.chat-avatar-wrap');
+    if (wrapEl && !wrapEl.querySelector('.chat-avatar-img')) {
+      loadTwitchAvatar(uname, wrapEl);
     }
   }
 
