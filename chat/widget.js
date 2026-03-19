@@ -23,10 +23,11 @@ var fields = {
   color_viewer:       ''
 };
 
-var _hideTimer  = null;
-var _msgCount   = 0;
-var _visible    = false;
-var _seenIds    = {};
+var _hideTimer    = null;
+var _msgCount     = 0;
+var _visible      = false;
+var _seenIds      = {};
+var _avatarCache  = {};  /* username → jtvnw.net URL (or '' if not found) */
 
 /* ---- Deterministic color from username ---- */
 var COLORS = [
@@ -114,6 +115,29 @@ function resetHideTimer() {
   _hideTimer = setTimeout(hideWidget, secs * 1000);
 }
 
+/* ---- Async Twitch avatar loader — fetches real jtvnw.net URL via decapi.me ---- */
+function loadTwitchAvatar(uname, imgEl) {
+  if (_avatarCache[uname] !== undefined) {
+    if (_avatarCache[uname] && imgEl.parentNode) {
+      imgEl.src = _avatarCache[uname];
+    }
+    return;
+  }
+  /* Mark as in-flight to avoid duplicate requests */
+  _avatarCache[uname] = '';
+  fetch('https://decapi.me/twitch/avatar/' + uname)
+    .then(function(r) { return r.text(); })
+    .then(function(url) {
+      url = (url || '').trim();
+      var valid = url && url.indexOf('http') === 0 && url.indexOf('Error') === -1;
+      _avatarCache[uname] = valid ? url : '';
+      if (valid && imgEl.parentNode) {
+        imgEl.src = url;
+      }
+    })
+    .catch(function() { _avatarCache[uname] = ''; });
+}
+
 /* ---- Detect role from badges ---- */
 function detectRole(badges) {
   for (var i = 0; i < badges.length; i++) {
@@ -155,17 +179,16 @@ function addMessage(data) {
     ? roleColor
     : (tagColor && tagColor !== '#000000' && tagColor !== '') ? tagColor : usernameColor(displayName);
 
-  /* Avatar — merge top-level and nested data to catch avatar at either level.
-     SE provides profileImage / avatar on event.data for real Twitch chat.
-     unavatar.io is the fallback proxy when SE doesn't supply it. */
+  /* Avatar — show colored initial immediately, then async-fetch the real
+     jtvnw.net profile picture via decapi.me (cached per username).
+     SE-provided avatar field is used directly when present. */
+  var uname = (data.username || data.name || displayName).toLowerCase().replace(/[^a-z0-9_]/g, '');
   var avatarHtml = '';
   if (fields.show_avatar) {
-    var uname  = (data.username || data.name || displayName).toLowerCase().replace(/[^a-z0-9_]/g, '');
-    var imgUrl = data.avatar || data.profileImage || data.profile_image_url
-              || ('https://unavatar.io/twitch/' + uname);
+    var seAvatar = data.avatar || data.profileImage || data.profile_image_url || '';
     avatarHtml =
       '<div class="chat-avatar chat-avatar-wrap" style="background:' + avatarBg + '" title="' + esc(displayName) + '">' +
-        '<img class="chat-avatar-img" src="' + imgUrl + '" alt="" ' +
+        '<img class="chat-avatar-img" data-uname="' + uname + '" src="' + seAvatar + '" alt="" ' +
           'onerror="this.style.display=\'none\';this.parentNode.classList.add(\'chat-avatar-fallback\')">' +
         '<span class="chat-avatar-initial">' + initial + '</span>' +
       '</div>';
@@ -192,6 +215,14 @@ function addMessage(data) {
     '</div>';
 
   container.appendChild(msgEl);
+
+  /* Async-load real Twitch profile picture if SE didn't supply one */
+  if (fields.show_avatar && uname) {
+    var imgEl = msgEl.querySelector('.chat-avatar-img');
+    if (imgEl && !imgEl.src) {
+      loadTwitchAvatar(uname, imgEl);
+    }
+  }
 
   /* Enforce max message count — remove oldest first */
   var max = Math.max(1, parseInt(fields.max_messages, 10) || 6);
