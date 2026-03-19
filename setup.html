@@ -363,8 +363,8 @@ details.alt-details[open] summary::before { content: '▾ '; }
     <div class="error-icon">⚠️</div>
     <div class="error-msg" id="error-msg-text"></div>
     <p class="error-fallback">
-      Alternative: Lade die vorbereitete Overlay-Datei herunter und importiere sie in StreamElements
-      (<strong style="color:#94a3b8">My Overlays → New → Import</strong>).
+      Alternative: Lade die Overlay-Datei herunter und importiere sie manuell in StreamElements:
+      <strong style="color:#94a3b8">Dashboard → Overlays → Import-Button (oben rechts) → JSON-Datei auswählen</strong>.
     </p>
     <button class="btn btn-secondary" onclick="downloadSeOverlay()">
       📦 Overlay als JSON herunterladen
@@ -1041,18 +1041,20 @@ function connectAndInstall() {
     ]
   };
 
-  /* Step 1: get channel ID — best-effort, overlay creation proceeds even on failure */
+  /* Step 1: get channel ID — best-effort, captures diagnostic info */
+  var _channelDiag = null; /* holds raw response text if channels/me fails */
   var channelPromise = fetch('https://api.streamelements.com/kappa/v2/channels/me', {
     headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
   })
   .then(function(r) {
     if (r.status === 401 || r.status === 403) throw { type: 'auth' };
-    if (!r.ok) return null; /* 404 or any other non-2xx — proceed without channel ID */
+    if (!r.ok) return r.text().then(function(t) { _channelDiag = 'channels/me → ' + r.status + ' ' + t; return null; });
     return r.json();
   })
   .catch(function(err) {
-    if (err && err.type === 'auth') throw err; /* re-throw auth errors */
-    return null; /* network failure — proceed without channel ID */
+    if (err && err.type === 'auth') throw err;
+    _channelDiag = 'channels/me → ' + (err && err.message ? err.message : String(err));
+    return null;
   });
 
   channelPromise.then(function(channel) {
@@ -1092,19 +1094,22 @@ function connectAndInstall() {
     });
   })
   .catch(function(err) {
+    var diag = _channelDiag ? '\n\n[Diagnose: ' + _channelDiag + ']' : '';
     if (err && err.type === 'auth') {
-      showError('Ungültiger Token. Bitte kopiere den JWT-Token aus dem StreamElements Dashboard: Account → Show Token (nicht die OBS-Browser-Source-URL!).');
+      showError('Ungültiger Token. Bitte kopiere den JWT-Token aus dem StreamElements Dashboard: Account → Show Token (nicht die OBS-Browser-Source-URL!).' + diag);
     } else if (err && err.type === 'create') {
-      showError('Overlay konnte nicht angelegt werden (Status ' + err.status + '). Prüfe ob dein Token noch gültig ist und ob du Twitch/YouTube mit SE verbunden hast.');
+      var bodySnip = err.body ? err.body.slice(0, 200) : '—';
+      showError('SE API Status ' + err.status + ': ' + bodySnip + diag);
     } else if (err && (err.message === 'Failed to fetch' || (err.message && err.message.indexOf('NetworkError') !== -1))) {
-      showError('Keine Verbindung zur StreamElements API. Möglicherweise blockiert dein Browser oder eine Firewall die Verbindung.');
+      showError('Keine Verbindung zur StreamElements API. Möglicherweise blockiert dein Browser oder eine Firewall die Verbindung.' + diag);
     } else {
-      showError('Fehler: ' + (err && err.message ? err.message : JSON.stringify(err)));
+      showError('Fehler: ' + (err && err.message ? err.message : JSON.stringify(err)) + diag);
     }
   });
 }
 
 function showError(msg) {
+  console.error('[NP-Widget setup error]', msg);
   document.getElementById('error-msg-text').textContent = msg;
   setState('error');
 }
