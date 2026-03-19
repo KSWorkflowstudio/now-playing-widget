@@ -219,7 +219,7 @@ function addMessage(data) {
   /* Async-load real Twitch profile picture if SE didn't supply one */
   if (fields.show_avatar && uname) {
     var imgEl = msgEl.querySelector('.chat-avatar-img');
-    if (imgEl && !imgEl.src) {
+    if (imgEl && !imgEl.getAttribute('src')) {
       loadTwitchAvatar(uname, imgEl);
     }
   }
