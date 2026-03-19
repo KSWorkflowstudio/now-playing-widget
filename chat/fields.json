@@ -56,5 +56,10 @@
     "type": "checkbox",
     "label": "\"Twitch Chat\" Header-Leiste anzeigen",
     "value": true
+  },
+  "transparent_bg": {
+    "type": "checkbox",
+    "label": "Hintergrund transparent (nur Nachrichten-Bubbles sichtbar)",
+    "value": true
   }
 }

@@ -12,7 +12,8 @@ var fields = {
   show_header:     true,
   font_size:       'medium',
   theme:           'dark',
-  auto_hide_secs:  0
+  auto_hide_secs:  0,
+  transparent_bg:  true
 };
 
 var _hideTimer  = null;
@@ -199,6 +200,13 @@ function applyAppearance() {
   /* Header bar visibility */
   var bar = document.querySelector('.chat-header-bar');
   if (bar) bar.style.display = fields.show_header ? '' : 'none';
+
+  /* Transparent background */
+  if (fields.transparent_bg) {
+    widget.classList.add('chat-bg-transparent');
+  } else {
+    widget.classList.remove('chat-bg-transparent');
+  }
 }
 
 /* ============================================================
