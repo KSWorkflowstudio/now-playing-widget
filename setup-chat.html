@@ -330,15 +330,19 @@ code { background: #0f1117; padding: 1px 5px; border-radius: 3px; font-size: 0.8
 
     <hr class="divider">
 
-    <p style="font-size:0.82rem;font-weight:600;color:#94a3b8;margin-bottom:6px">Overlay-Link für OBS Browser Source:</p>
+    <p style="font-size:0.82rem;font-weight:600;color:#94a3b8;margin-bottom:6px">OBS Browser Source URL:</p>
     <div class="overlay-url-box" id="overlay-url-display" onclick="copyOverlayUrl()">—</div>
     <div class="copy-hint" id="overlay-url-copy-hint">Klicken zum Kopieren</div>
 
-    <button class="btn btn-primary" id="btn-open-se" onclick="openInSE()">
-      🎬 Widget in StreamElements öffnen &amp; prüfen
-    </button>
+    <p style="font-size:0.82rem;font-weight:600;color:#94a3b8;margin:12px 0 6px">Widget in StreamElements bearbeiten:</p>
+    <a id="se-edit-link" href="#" target="_blank" rel="noopener"
+       style="display:block;background:rgba(145,71,255,0.15);border:1px solid rgba(145,71,255,0.3);
+              border-radius:8px;padding:10px 14px;font-size:0.82rem;color:#c4b5fd;word-break:break-all;
+              text-decoration:none;margin-bottom:14px">
+      — wird geladen —
+    </a>
 
-    <div class="notice" style="margin-top:14px">
+    <div class="notice">
       <strong>OBS Browser Source:</strong> Breite <code>400</code> &middot; Höhe <code>600</code> &middot; Eigenes CSS: <code style="color:#f0abfc">body{background:rgba(0,0,0,0)}</code><br>
       <span style="color:#9147ff;opacity:0.9">„Quelle ausblenden wenn nicht sichtbar" → AUS lassen</span>
     </div>
@@ -348,15 +352,15 @@ code { background: #0f1117; padding: 1px 5px; border-radius: 3px; font-size: 0.8
     <div class="mini-steps">
       <div class="mini-step">
         <div class="mini-step-n">1</div>
-        <div>In SE: <strong>My Overlays → Chat Widget</strong> öffnen → <strong>Launch</strong></div>
+        <div>Oben auf den <strong>SE-Link</strong> klicken → Widget-Editor öffnet sich</div>
       </div>
       <div class="mini-step">
         <div class="mini-step-n">2</div>
-        <div>URL kopieren → in OBS als <strong>Browser Source</strong> einfügen (400 × 600 px)</div>
+        <div>OBS URL oben kopieren → in OBS als <strong>Browser Source</strong> einfügen (400 × 600 px)</div>
       </div>
       <div class="mini-step">
         <div class="mini-step-n">3</div>
-        <div><strong>Fields-Tab</strong> → Theme, Schriftgröße, max. Nachrichten, Auto-Ausblenden einstellen</div>
+        <div><strong>Fields-Tab</strong> in SE → Theme, Schriftfarben, Schriftart einstellen</div>
       </div>
     </div>
   </div>
@@ -600,6 +604,9 @@ function connectAndInstall() {
         var editUrl    = 'https://streamelements.com/dashboard/overlays/' + overlayId;
         _overlayResult = { overlayUrl: overlayUrl, editUrl: editUrl, channelId: channelId, overlayId: overlayId };
         document.getElementById('overlay-url-display').textContent = overlayUrl;
+        var editLink = document.getElementById('se-edit-link');
+        editLink.href = editUrl;
+        editLink.textContent = editUrl;
         setState('success');
       });
     });
