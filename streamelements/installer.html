@@ -248,6 +248,14 @@ input[type="text"]:focus, select:focus { border-color: #6366f1; box-shadow: 0 0 
 .manual-section { margin-top: 12px; }
 details.manual-details > summary { list-style: none; }
 details.manual-details > summary::-webkit-details-marker { display: none; }
+/* ---- Setup details toggle ---- */
+details.setup-details summary { font-size: 0.78rem; color: #475569; cursor: pointer; user-select: none; list-style: none; margin-top: 10px; }
+details.setup-details summary::-webkit-details-marker { display: none; }
+details.setup-details summary::before { content: '▸ '; }
+details.setup-details[open] summary::before { content: '▾ '; }
+.share-id-indicator { display: inline-flex; align-items: center; gap: 5px; font-size: 0.73rem; margin-top: 6px; }
+.share-id-indicator.active { color: #22c55e; }
+.share-id-indicator.inactive { color: #475569; }
 </style>
 </head>
 <body>
@@ -261,7 +269,7 @@ details.manual-details > summary::-webkit-details-marker { display: none; }
       <p>Setup-Assistent für StreamElements &amp; OBS</p>
     </div>
   </div>
-  <span class="badge">v1.4</span>
+  <span class="badge">v1.5</span>
 </div>
 
 <!-- ====== LIVE PREVIEW HERO ====== -->
@@ -277,6 +285,44 @@ details.manual-details > summary::-webkit-details-marker { display: none; }
 
   <!-- ====== LEFT COLUMN ====== -->
   <div class="left-col">
+
+    <!-- ⓪ SE Template-Overlay (einmalig) -->
+    <div class="card" style="background:#0f1018;border-color:#1d2035">
+      <div class="section-heading">
+        <div class="section-num" style="background:#252840;font-size:0.65rem;color:#64748b">⚙</div>
+        <div class="section-title" style="color:#64748b">SE Template-Overlay <span style="font-size:0.72rem;font-weight:500;color:#334155">(einmalig · für 1-Click Install)</span></div>
+      </div>
+      <p style="font-size:0.8rem;color:#475569;margin-bottom:12px">Hinterlege deine SE Overlay-ID — Kunden können das Widget dann mit einem Klick installieren, ohne Token-Eingabe ⚡</p>
+      <div class="field">
+        <label>SE Overlay-ID</label>
+        <input type="text" id="inp-share-id" placeholder="z.B. 6a3f9b2c1d4e5f0a…"
+          style="font-family:monospace;font-size:0.8rem"
+          oninput="onShareIdChange()" autocomplete="off">
+        <div class="field-hint">
+          SE → Overlay öffnen → URL: <code style="color:#a5b4fc">…/overlay/CHANNEL/<strong>OVERLAY_ID</strong></code> — letzte ID hier einfügen
+        </div>
+      </div>
+      <div id="share-id-status" class="share-id-indicator inactive">● Keine ID — Kunden-Link nutzt Token-Eingabe</div>
+      <details class="setup-details">
+        <summary>So richtest du das Template-Overlay ein</summary>
+        <div style="margin-top:10px">
+          <div class="steps">
+            <div class="step"><div class="step-body">
+              <div class="step-title">Widget-JSON herunterladen &amp; importieren</div>
+              <div class="step-desc">Karte ③ → <strong>Overlay herunterladen</strong> → SE → <strong>My Overlays → New → Import</strong></div>
+            </div></div>
+            <div class="step"><div class="step-body">
+              <div class="step-title">Overlay-ID aus der URL kopieren</div>
+              <div class="step-desc">Widget in SE öffnen → Browser-URL: <code style="color:#a5b4fc">…/overlay/CHANNEL/<strong>OVERLAY_ID</strong></code> → letzte ID (24 Zeichen) kopieren</div>
+            </div></div>
+            <div class="step"><div class="step-body">
+              <div class="step-title">ID hier eintragen → Kunden-Link generieren</div>
+              <div class="step-desc">Der Kunden-Link enthält die Share-ID → Kunde klickt → Widget direkt in SE, kein Token nötig ⚡</div>
+            </div></div>
+          </div>
+        </div>
+      </details>
+    </div>
 
     <!-- ① Last.fm Zugangsdaten -->
     <div class="card">
@@ -296,7 +342,7 @@ details.manual-details > summary::-webkit-details-marker { display: none; }
       <button class="btn btn-secondary" id="btn-copy-url" onclick="generateConfigUrl()" style="width:100%;margin-top:4px;justify-content:center;font-size:0.8rem">
         🔗 Konfig-Link generieren &amp; kopieren
       </button>
-      <p style="margin-top:6px;font-size:0.72rem;color:#334155;line-height:1.4">Tipp: Link öffnet die Kunden-Seite (setup.html) mit allen Einstellungen vorausgefüllt — Kunde gibt nur noch seinen SE Token ein, Widget wird automatisch angelegt.</p>
+      <p style="margin-top:6px;font-size:0.72rem;color:#334155;line-height:1.4">Tipp: Link öffnet die Kunden-Seite mit Widget-Vorschau. Falls eine SE Overlay-ID hinterlegt ist, bekommen Kunden einen 1-Click-Install-Button — ohne Token-Eingabe ⚡</p>
     </div>
 
     <!-- ② Design-Einstellungen -->
@@ -1597,6 +1643,8 @@ function generateConfigUrl() {
   p.set('bars',  document.getElementById('chk-bars').checked  ? '1' : '0');
   p.set('label', document.getElementById('chk-label').checked ? '1' : '0');
   p.set('album', document.getElementById('chk-album').checked ? '1' : '0');
+  var shareId = (document.getElementById('inp-share-id').value || '').trim();
+  if (shareId) p.set('share', shareId);
   var url = base + '?' + p.toString();
   navigator.clipboard.writeText(url).then(function() {
     var btn = document.getElementById('btn-copy-url');
@@ -1609,9 +1657,31 @@ function generateConfigUrl() {
   });
 }
 
+/* ---- SE Share ID (localStorage persistence) ---- */
+function onShareIdChange() {
+  var v = (document.getElementById('inp-share-id').value || '').trim();
+  var statusEl = document.getElementById('share-id-status');
+  if (v) {
+    localStorage.setItem('np_share_id', v);
+    statusEl.textContent = '● Share-ID gesetzt — Kunden-Link nutzt 1-Click Install ⚡';
+    statusEl.className = 'share-id-indicator active';
+  } else {
+    localStorage.removeItem('np_share_id');
+    statusEl.textContent = '● Keine ID — Kunden-Link nutzt Token-Eingabe';
+    statusEl.className = 'share-id-indicator inactive';
+  }
+}
+
+function loadShareId() {
+  var v = localStorage.getItem('np_share_id') || '';
+  document.getElementById('inp-share-id').value = v;
+  if (v) onShareIdChange();
+}
+
 /* ---- Init ---- */
 applyUrlParams();
 loadFiles();
+loadShareId();
 </script>
 
 <!-- ============================================================

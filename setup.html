@@ -157,6 +157,25 @@ input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.15)
 }
 .divider { border: none; border-top: 1px solid #252840; margin: 16px 0; }
 code { background: #0f1117; padding: 1px 5px; border-radius: 3px; font-size: 0.85em; }
+/* ---- Share / 1-Click state ---- */
+.creds-box {
+  background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.22);
+  border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; font-size: 0.82rem; line-height: 1.55;
+}
+.creds-box strong { color: #e2e8f0; }
+.creds-row { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+.creds-row label { color: #64748b; font-size: 0.78rem; margin: 0; font-weight: 400; }
+.creds-val {
+  font-family: 'Fira Code', 'Cascadia Code', monospace; color: #86efac; font-size: 0.79rem;
+  background: rgba(0,0,0,0.25); padding: 2px 8px; border-radius: 5px;
+  cursor: pointer; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  transition: background 0.15s;
+}
+.creds-val:hover { background: rgba(99,102,241,0.20); }
+details.alt-details summary { font-size: 0.78rem; color: #475569; cursor: pointer; user-select: none; padding: 10px 0; list-style: none; }
+details.alt-details summary::-webkit-details-marker { display: none; }
+details.alt-details summary::before { content: '▸ '; }
+details.alt-details[open] summary::before { content: '▾ '; }
 </style>
 </head>
 <body>
@@ -164,7 +183,7 @@ code { background: #0f1117; padding: 1px 5px; border-radius: 3px; font-size: 0.8
 
 <!-- ====== HEADER ====== -->
 <div class="page-header">
-  <h1>🎵 Now Playing Widget <span class="badge">v1.4</span></h1>
+  <h1>🎵 Now Playing Widget <span class="badge">v1.5</span></h1>
   <p>StreamElements Einrichtung &middot; 2 Schritte, kein Code</p>
 </div>
 
@@ -215,6 +234,92 @@ code { background: #0f1117; padding: 1px 5px; border-radius: 3px; font-size: 0.8
 
     <div class="notice">
       Das Widget wird direkt in deinem StreamElements-Account angelegt. Alle Einstellungen (Theme, Animation, Last.fm API Key usw.) kannst du danach jederzeit im <strong>Fields-Tab</strong> in SE ändern — ohne Code.
+    </div>
+  </div>
+
+  <!-- STATE: 1-Click Install (Share URL) -->
+  <div class="state" id="state-share">
+    <div class="card-title">⚡ 1-Click Installation</div>
+    <p style="margin-bottom:14px;color:#64748b">Du musst in <strong style="color:#e2e8f0">StreamElements eingeloggt</strong> sein. Dann klicke den Button — das Widget wird sofort deinem Account hinzugefügt.</p>
+
+    <!-- Customer credentials to copy -->
+    <div class="creds-box" id="share-creds-box" style="display:none">
+      <strong>📋 Deine Last.fm Zugangsdaten (nach der Installation in SE eingeben):</strong>
+      <div class="creds-row">
+        <label>Last.fm Benutzername</label>
+        <span class="creds-val" id="cred-user-val" onclick="copyCred('user',this)" title="Klicken zum Kopieren">—</span>
+      </div>
+      <div class="creds-row">
+        <label>Last.fm API Key</label>
+        <span class="creds-val" id="cred-key-val" onclick="copyCred('key',this)" title="Klicken zum Kopieren">—</span>
+      </div>
+      <p style="margin-top:8px;font-size:0.71rem;color:#334155">Klicken zum Kopieren · Diese Daten trägst du in Schritt 2 im SE Fields-Tab ein</p>
+    </div>
+
+    <button class="btn btn-primary" onclick="doShareInstall()">
+      ⚡ In StreamElements installieren
+    </button>
+
+    <div class="mini-steps" style="margin-top:14px">
+      <div class="mini-step">
+        <div class="mini-step-n">1</div>
+        <div>Button klicken → StreamElements öffnet sich → Widget wird deinem Account hinzugefügt</div>
+      </div>
+      <div class="mini-step">
+        <div class="mini-step-n">2</div>
+        <div>In SE: <strong>My Overlays → Widget öffnen → Fields-Tab</strong> → Last.fm Benutzername &amp; API Key eingeben</div>
+      </div>
+      <div class="mini-step">
+        <div class="mini-step-n">3</div>
+        <div>Overlay starten → URL in <strong>OBS Browser Source</strong> einfügen (Breite: 400, Höhe: 120)</div>
+      </div>
+    </div>
+
+    <details class="alt-details">
+      <summary>Alternative: Widget manuell per API-Token anlegen</summary>
+      <p style="font-size:0.82rem;color:#64748b;margin:0 0 10px">Falls der 1-Click Install nicht klappt, kann das Widget auch über den SE API Token angelegt werden:</p>
+      <button class="btn btn-ghost" onclick="setState('input')">→ Token-Setup öffnen</button>
+    </details>
+  </div>
+
+  <!-- STATE: Share Done -->
+  <div class="state" id="state-share-done">
+    <div class="success-icon">🚀</div>
+    <div class="success-title">Widget installiert!</div>
+    <p class="success-sub">StreamElements hat das Widget deinem Account hinzugefügt.</p>
+
+    <div class="mini-steps" style="margin-bottom:14px">
+      <div class="mini-step">
+        <div class="mini-step-n">1</div>
+        <div>In SE: <strong>My Overlays</strong> → <strong>„Now Playing Widget"</strong> öffnen → bearbeiten</div>
+      </div>
+      <div class="mini-step">
+        <div class="mini-step-n">2</div>
+        <div><strong>Fields-Tab</strong> → <em>lastfm_user</em> &amp; <em>lastfm_key</em> eintragen — alle anderen Einstellungen sind vorausgefüllt</div>
+      </div>
+      <div class="mini-step">
+        <div class="mini-step-n">3</div>
+        <div>Overlay starten → URL kopieren → <strong>OBS Browser Source</strong> (Breite: 400, Höhe: 120)</div>
+      </div>
+    </div>
+
+    <div class="creds-box" id="done-creds-box" style="display:none">
+      <strong>📋 Deine Last.fm Zugangsdaten für den Fields-Tab:</strong>
+      <div class="creds-row">
+        <label>Benutzername</label>
+        <span class="creds-val" id="done-user-val" onclick="copyCred('user',this)" title="Kopieren">—</span>
+      </div>
+      <div class="creds-row">
+        <label>API Key</label>
+        <span class="creds-val" id="done-key-val" onclick="copyCred('key',this)" title="Kopieren">—</span>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="window.open('https://streamelements.com/dashboard/overlays','_blank')" style="margin-top:4px">
+      🎬 StreamElements öffnen
+    </button>
+    <div class="notice" style="margin-top:14px">
+      <strong>OBS Browser Source:</strong> Breite <code>400</code> &middot; Höhe <code>120</code> &middot; Eigenes CSS: <code style="color:#f0abfc">body{background:rgba(0,0,0,0)}</code>
     </div>
   </div>
 
@@ -700,6 +805,7 @@ function applyUrlParams() {
   _settings.showBars  = p.get('bars')  !== '0';
   _settings.showLabel = p.get('label') !== '0';
   _settings.showAlbum = p.get('album') !== '0';
+  _settings.shareId   = p.get('share') || null;
 }
 
 /* ---- Load widget files (fetch from repo, fallback to embedded) ---- */
@@ -835,6 +941,33 @@ function buildInjectedJs() {
   js = js.replace("shape:         'default'", "shape:         '" + (_settings.shape || 'default') + "'");
   js = js.replace("animation:     'ios'",     "animation:     '" + (_settings.anim  || 'ios')     + "'");
   return js;
+}
+
+/* ---- 1-Click Share Install ---- */
+function doShareInstall() {
+  var shareUrl = 'https://streamelements.com/dashboard/overlays/share/' + _settings.shareId;
+  window.open(shareUrl, '_blank');
+  /* Show credentials in done state if available */
+  if (_settings.user || _settings.key) {
+    var db = document.getElementById('done-creds-box');
+    if (db) {
+      db.style.display = '';
+      document.getElementById('done-user-val').textContent = _settings.user || '—';
+      document.getElementById('done-key-val').textContent  = _settings.key  || '—';
+    }
+  }
+  setState('share-done');
+}
+
+function copyCred(which, el) {
+  var val = which === 'user' ? _settings.user : _settings.key;
+  if (!val || !el) return;
+  navigator.clipboard.writeText(val).then(function() {
+    var orig = el.textContent;
+    el.textContent = '✓ Kopiert!';
+    el.style.color = '#22c55e';
+    setTimeout(function() { el.textContent = orig; el.style.color = ''; }, 1500);
+  }).catch(function() {});
 }
 
 /* ---- State machine ---- */
@@ -1021,6 +1154,18 @@ function downloadSeOverlay() {
 /* ---- Init ---- */
 applyUrlParams();
 loadWidgetFiles();
+/* Show 1-click share state if a share ID is present in URL */
+if (_settings.shareId) {
+  if (_settings.user || _settings.key) {
+    var scb = document.getElementById('share-creds-box');
+    if (scb) {
+      scb.style.display = '';
+      document.getElementById('cred-user-val').textContent = _settings.user || '—';
+      document.getElementById('cred-key-val').textContent  = _settings.key  || '—';
+    }
+  }
+  setState('share');
+}
 </script>
 </body>
 </html>
