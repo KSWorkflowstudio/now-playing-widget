@@ -558,10 +558,6 @@ body {
 .np-artist { font-size: var(--np-artist-size); color: var(--np-artist-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .np-album  { font-size: var(--np-album-size);  color: var(--np-album-color);  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.np-progress-wrap { margin-top: 6px; display: flex; align-items: center; gap: 6px; }
-.np-progress-bar { flex: 1; height: var(--np-progress-h); background: var(--np-progress-bg); border-radius: 99px; overflow: hidden; }
-.np-progress-fill { height: 100%; background: var(--np-progress-fill); border-radius: 99px; width: 0%; transition: width 1s linear; }
-.np-time { font-size: 9px; color: var(--np-album-color); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 .np-theme-light {
   --np-bg:           rgba(255,255,255,0.68);
@@ -884,7 +880,7 @@ function buildPreview() {
     + '<div class="np-status" id="np-status"><div class="np-bars" id="np-bars"><div class="np-bar"></div><div class="np-bar"></div><div class="np-bar"></div><div class="np-bar"></div></div>'
     + '<span class="np-now-label" id="np-now-label">Now Playing</span></div>'
     + '<div class="np-track" id="np-track"></div><div class="np-artist" id="np-artist"></div><div class="np-album" id="np-album"></div>'
-    + '<div class="np-progress-wrap"><div class="np-progress-bar"><div class="np-progress-fill" id="np-progress-fill"></div></div></div>'
+    + ''
     + '</div></div><script>' + js + '<\/script></body></html>';
 
   document.getElementById('preview-frame').srcdoc = doc;
@@ -908,9 +904,7 @@ function buildWidgetHtml() {
     + '    <div class="np-track"  id="np-track"></div>\n'
     + '    <div class="np-artist" id="np-artist"></div>\n'
     + '    <div class="np-album"  id="np-album"></div>\n'
-    + '    <div class="np-progress-wrap">\n'
-    + '      <div class="np-progress-bar"><div class="np-progress-fill" id="np-progress-fill"></div></div>\n'
-    + '    </div>\n'
+    + ''
     + '  </div>\n'
     + '</div>';
 }

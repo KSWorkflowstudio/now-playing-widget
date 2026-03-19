@@ -279,38 +279,6 @@ body {
   text-align: var(--np-text-align);
 }
 
-/* ---------- Progress bar ---------- */
-.np-progress-wrap {
-  margin-top: 6px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.np-time { display: none; }
-
-.np-progress-bar {
-  flex: 1;
-  height: var(--np-progress-h);
-  background: var(--np-progress-bg);
-  border-radius: 99px;
-  overflow: hidden;
-}
-
-.np-progress-fill {
-  height: 100%;
-  background: var(--np-progress-fill);
-  border-radius: 99px;
-  width: 0%;
-  transition: width 1s linear;
-}
-
-.np-time {
-  font-size: 9px;
-  color: var(--np-album-color);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
 
 /* ---------- Preset Themes ---------- */
 .np-theme-light {
