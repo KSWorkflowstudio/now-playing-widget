@@ -339,7 +339,11 @@ details.alt-details[open] summary::before { content: '▾ '; }
 
     <p style="font-size:0.82rem;font-weight:600;color:#94a3b8;margin-bottom:6px">Overlay-Link für OBS Browser Source:</p>
     <div class="overlay-url-box" id="overlay-url-display" onclick="copyOverlayUrl()">—</div>
-    <div class="copy-hint">Klicken zum Kopieren</div>
+    <div class="copy-hint" id="overlay-url-copy-hint">Klicken zum Kopieren</div>
+    <div id="overlay-url-hint" style="display:none;font-size:0.8rem;color:#f59e0b;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.22);border-radius:8px;padding:10px 13px;margin-bottom:10px">
+      ⚠️ Die vollständige Overlay-URL findest du in StreamElements:<br>
+      <strong style="color:#e2e8f0">My Overlays → „Now Playing Widget" öffnen → Launch → Browser Source URL kopieren</strong>
+    </div>
 
     <button class="btn btn-primary" onclick="openSeDashboard()">
       🎬 In StreamElements öffnen
@@ -1037,7 +1041,7 @@ function connectAndInstall() {
     ]
   };
 
-  /* Step 1: verify token + get channel ID */
+  /* Step 1: try to get channel ID (optional — 404 means channel not yet configured) */
   fetch('https://api.streamelements.com/kappa/v2/channels/me', {
     headers: {
       'Authorization': 'Bearer ' + token,
@@ -1046,11 +1050,12 @@ function connectAndInstall() {
   })
   .then(function(r) {
     if (r.status === 401 || r.status === 403) throw { type: 'auth' };
+    if (r.status === 404) return null; /* channel not set up yet — proceed without channel ID */
     if (!r.ok) throw { type: 'api', status: r.status };
     return r.json();
   })
   .then(function(channel) {
-    var channelId = channel._id || channel.id;
+    var channelId = channel ? (channel._id || channel.id) : null;
 
     /* Step 2: create overlay */
     return fetch('https://api.streamelements.com/kappa/v2/overlays', {
@@ -1063,26 +1068,36 @@ function connectAndInstall() {
       body: JSON.stringify(overlayBody)
     })
     .then(function(r) {
+      if (r.status === 401 || r.status === 403) throw { type: 'auth' };
       if (!r.ok) return r.text().then(function(t) { throw { type: 'create', status: r.status, body: t }; });
       return r.json();
     })
     .then(function(overlay) {
       var overlayId  = overlay._id || overlay.id;
-      var overlayUrl = 'https://streamelements.com/overlay/' + channelId + '/' + overlayId;
+      var overlayUrl = channelId
+        ? 'https://streamelements.com/overlay/' + channelId + '/' + overlayId
+        : null;
       _overlayResult = { overlayUrl: overlayUrl, channelId: channelId, overlayId: overlayId };
-      document.getElementById('overlay-url-display').textContent = overlayUrl;
+      var urlEl = document.getElementById('overlay-url-display');
+      if (overlayUrl) {
+        urlEl.textContent = overlayUrl;
+        document.getElementById('overlay-url-hint').style.display = 'none';
+      } else {
+        urlEl.textContent = 'Overlay-ID: ' + overlayId;
+        document.getElementById('overlay-url-hint').style.display = '';
+      }
       setState('success');
     });
   })
   .catch(function(err) {
     if (err && err.type === 'auth') {
-      showError('Ungültiger Token. Bitte prüfe ob du den richtigen Token aus dem StreamElements Dashboard (Account → Show Token) kopiert hast.');
+      showError('Ungültiger Token. Bitte prüfe ob du den richtigen JWT-Token aus dem StreamElements Dashboard (Account → Show Token) kopiert hast. Nicht die OBS-Browser-Source-URL!');
     } else if (err && err.type === 'api') {
-      showError('StreamElements API nicht erreichbar (Status ' + err.status + '). Bitte versuche es in einigen Minuten erneut.');
+      showError('StreamElements API Fehler (Status ' + err.status + '). Bitte versuche es in einigen Minuten erneut.');
     } else if (err && err.type === 'create') {
-      showError('Overlay konnte nicht angelegt werden (Status ' + err.status + '). Bitte probiere die JSON-Download-Option.');
+      showError('Overlay konnte nicht angelegt werden (Status ' + err.status + '). Bitte prüfe, ob dein Token noch gültig ist.');
     } else if (err && (err.message === 'Failed to fetch' || (err.message && err.message.indexOf('NetworkError') !== -1))) {
-      showError('Keine Verbindung zur StreamElements API. Mögliche Ursache: Browser blockiert die Verbindung (CORS/Firewall). Bitte nutze die JSON-Download-Option.');
+      showError('Keine Verbindung zur StreamElements API. Möglicherweise blockiert dein Browser oder eine Firewall die Verbindung.');
     } else {
       showError('Unbekannter Fehler: ' + (err && err.message ? err.message : JSON.stringify(err)));
     }
@@ -1097,7 +1112,11 @@ function showError(msg) {
 /* ---- Copy overlay URL ---- */
 function copyOverlayUrl() {
   var url = _overlayResult && _overlayResult.overlayUrl;
-  if (!url) return;
+  if (!url) {
+    /* No channel ID available — open SE overlays dashboard instead */
+    window.open('https://streamelements.com/dashboard/overlays', '_blank');
+    return;
+  }
   navigator.clipboard.writeText(url).then(function() {
     var el = document.getElementById('overlay-url-display');
     var orig = el.textContent;
