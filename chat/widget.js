@@ -20,6 +20,7 @@ var fields = {
 var _hideTimer  = null;
 var _msgCount   = 0;
 var _visible    = false;
+var _seenIds    = {};
 
 /* ---- Deterministic color from username ---- */
 var COLORS = [
@@ -112,6 +113,15 @@ function addMessage(data) {
   var container = document.getElementById('chat-messages');
   if (!container) return;
 
+  /* Deduplicate — SE can fire the same event twice */
+  var msgId = data.msgId || data.id || (data.tags && data.tags.id);
+  if (msgId) {
+    if (_seenIds[msgId]) return;
+    _seenIds[msgId] = true;
+    var keys = Object.keys(_seenIds);
+    if (keys.length > 200) delete _seenIds[keys[0]];
+  }
+
   /* SE uses different field names across versions — check all */
   var displayName = data.displayName || data.name || data.username || data.nick || 'User';
   var text        = data.renderedText || data.text || '';
@@ -125,22 +135,20 @@ function addMessage(data) {
 
   /* Avatar — SE provides avatar URL directly on real chat events;
      fall back to colored initial when absent or image fails to load */
+  /* Avatar — SE doesn't send avatar URLs in chat events, so we use
+     unavatar.io as a reliable Twitch profile picture proxy.
+     SE-provided avatar field is used first if ever present. */
   var avatarHtml = '';
   if (fields.show_avatar) {
-    var imgUrl = data.avatar || data.profileImage || data.profile_image_url || '';
-    if (imgUrl) {
-      avatarHtml =
-        '<div class="chat-avatar chat-avatar-wrap" style="background:' + avatarBg + '" title="' + esc(displayName) + '">' +
-          '<img class="chat-avatar-img" src="' + imgUrl + '" alt="" ' +
-            'onerror="this.style.display=\'none\';this.parentNode.classList.add(\'chat-avatar-fallback\')">' +
-          '<span class="chat-avatar-initial">' + initial + '</span>' +
-        '</div>';
-    } else {
-      avatarHtml =
-        '<div class="chat-avatar chat-avatar-wrap chat-avatar-fallback" style="background:' + avatarBg + '" title="' + esc(displayName) + '">' +
-          '<span class="chat-avatar-initial">' + initial + '</span>' +
-        '</div>';
-    }
+    var uname  = (data.username || data.name || displayName).toLowerCase().replace(/[^a-z0-9_]/g, '');
+    var imgUrl = data.avatar || data.profileImage || data.profile_image_url
+              || ('https://unavatar.io/twitch/' + uname);
+    avatarHtml =
+      '<div class="chat-avatar chat-avatar-wrap" style="background:' + avatarBg + '" title="' + esc(displayName) + '">' +
+        '<img class="chat-avatar-img" src="' + imgUrl + '" alt="" ' +
+          'onerror="this.style.display=\'none\';this.parentNode.classList.add(\'chat-avatar-fallback\')">' +
+        '<span class="chat-avatar-initial">' + initial + '</span>' +
+      '</div>';
   }
 
   /* Timestamp */
