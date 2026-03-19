@@ -1,0 +1,295 @@
+/* ============================================================
+   TWITCH CHAT WIDGET — Frosted Glass Style
+   StreamElements Custom Widget CSS
+   ============================================================ */
+
+:root {
+  --chat-width:       400px;
+  --chat-radius:      18px;
+  --chat-blur:        28px;
+  --chat-padding:     14px 16px;
+
+  --chat-bg:          rgba(10, 10, 20, 0.82);
+  --chat-border:      rgba(255,255,255,0.10);
+  --chat-shadow:      0 8px 40px rgba(0,0,0,0.55);
+
+  --chat-font:        'Inter', 'Segoe UI', sans-serif;
+  --chat-font-size:   14px;
+
+  --chat-bubble-bg:   rgba(255,255,255,0.07);
+  --chat-bubble-border: rgba(255,255,255,0.10);
+  --chat-text-color:  rgba(255,255,255,0.90);
+  --chat-meta-color:  rgba(255,255,255,0.40);
+
+  --chat-badge-size:  16px;
+  --chat-avatar-size: 34px;
+  --chat-gap:         8px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: transparent;
+  font-family: var(--chat-font);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* ---- Widget container ---- */
+.chat-widget {
+  width: var(--chat-width);
+  max-width: 100%;
+  background: var(--chat-bg);
+  backdrop-filter: blur(var(--chat-blur)) saturate(180%) brightness(108%);
+  -webkit-backdrop-filter: blur(var(--chat-blur)) saturate(180%) brightness(108%);
+  border-radius: var(--chat-radius);
+  border: 1px solid var(--chat-border);
+  box-shadow: var(--chat-shadow),
+              inset 0 1px 0 rgba(255,255,255,0.13),
+              inset 0 -1px 0 rgba(0,0,0,0.18);
+  padding: 10px 0;
+  overflow: hidden;
+  position: relative;
+  will-change: transform, opacity;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.chat-widget.chat-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(12px);
+}
+
+.chat-widget.chat-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+@keyframes chat-slide-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(12px); }
+}
+.chat-widget.chat-out {
+  animation: chat-slide-out 0.4s ease forwards;
+}
+
+/* ---- Header bar ---- */
+.chat-header-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  margin-bottom: 6px;
+}
+.chat-header-icon {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #9147ff;
+  box-shadow: 0 0 6px rgba(145,71,255,0.7);
+  flex-shrink: 0;
+}
+.chat-header-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+}
+
+/* ---- Messages list ---- */
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--chat-gap);
+  padding: 0 10px;
+  overflow: hidden;
+}
+
+/* ---- Single message row ---- */
+.chat-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  will-change: transform, opacity;
+}
+
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@keyframes msg-out {
+  from { opacity: 1; transform: translateY(0)    scale(1); max-height: 80px; margin-bottom: 0; }
+  to   { opacity: 0; transform: translateY(-8px) scale(0.97); max-height: 0;  margin-bottom: -8px; }
+}
+
+.chat-msg.chat-msg-in  { animation: msg-in  0.30s cubic-bezier(0.34, 1.2, 0.64, 1) forwards; }
+.chat-msg.chat-msg-out { animation: msg-out 0.35s ease forwards; }
+
+/* ---- Avatar ---- */
+.chat-avatar {
+  width:  var(--chat-avatar-size);
+  height: var(--chat-avatar-size);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  margin-top: 1px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  border: 1.5px solid rgba(255,255,255,0.15);
+}
+
+/* ---- Bubble ---- */
+.chat-bubble {
+  background: var(--chat-bubble-bg);
+  border: 1px solid var(--chat-bubble-border);
+  border-radius: 4px 14px 14px 14px;
+  padding: 7px 11px 8px;
+  max-width: calc(var(--chat-width) - var(--chat-avatar-size) - 30px);
+  min-width: 0;
+  position: relative;
+}
+
+/* Tiny left-arrow on bubble */
+.chat-bubble::before {
+  content: '';
+  position: absolute;
+  top: 8px; left: -6px;
+  width: 0; height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-right: 6px solid var(--chat-bubble-border);
+}
+.chat-bubble::after {
+  content: '';
+  position: absolute;
+  top: 9px; left: -4px;
+  width: 0; height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-right: 5px solid rgba(255,255,255,0.07);
+}
+
+/* ---- Header row (name + badges + role) ---- */
+.chat-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.chat-name {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.chat-badges {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.chat-badge {
+  width:  var(--chat-badge-size);
+  height: var(--chat-badge-size);
+  vertical-align: middle;
+  border-radius: 3px;
+}
+
+/* ---- Role pill ---- */
+.chat-role {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 99px;
+  line-height: 1.6;
+}
+.chat-role-streamer { background: rgba(255,200,50,0.18);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.3);  }
+.chat-role-mod      { background: rgba(0,173,89,0.18);    color: #22c55e; border: 1px solid rgba(34,197,94,0.3);  }
+.chat-role-vip      { background: rgba(255,0,128,0.15);   color: #f472b6; border: 1px solid rgba(244,114,182,0.3);}
+.chat-role-sub      { background: rgba(145,71,255,0.15);  color: #a78bfa; border: 1px solid rgba(167,139,250,0.3);}
+
+/* ---- Message text ---- */
+.chat-text {
+  font-size: var(--chat-font-size);
+  color: var(--chat-text-color);
+  line-height: 1.5;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* Twitch emotes inside message */
+.chat-text img {
+  height: calc(var(--chat-font-size) * 1.5);
+  width: auto;
+  vertical-align: middle;
+  margin: 0 1px;
+}
+
+/* ---- Timestamp ---- */
+.chat-time {
+  font-size: 9px;
+  color: var(--chat-meta-color);
+  margin-top: 3px;
+  text-align: right;
+}
+
+/* ============================================================
+   THEMES
+   ============================================================ */
+
+/* Frosted Glass */
+.chat-widget.theme-frosted {
+  --chat-bg:            rgba(255,255,255,0.10);
+  --chat-border:        rgba(255,255,255,0.22);
+  --chat-blur:          24px;
+  --chat-bubble-bg:     rgba(255,255,255,0.10);
+  --chat-bubble-border: rgba(255,255,255,0.18);
+}
+
+/* Light */
+.chat-widget.theme-light {
+  --chat-bg:            rgba(255,255,255,0.90);
+  --chat-border:        rgba(0,0,0,0.10);
+  --chat-blur:          20px;
+  --chat-bubble-bg:     rgba(0,0,0,0.05);
+  --chat-bubble-border: rgba(0,0,0,0.08);
+  --chat-text-color:    rgba(0,0,0,0.85);
+  --chat-meta-color:    rgba(0,0,0,0.35);
+}
+.chat-widget.theme-light .chat-header-label { color: rgba(0,0,0,0.30); }
+.chat-widget.theme-light .chat-header-bar   { border-bottom-color: rgba(0,0,0,0.08); }
+
+/* Minimal */
+.chat-widget.theme-minimal {
+  --chat-bg:            rgba(0,0,0,0.60);
+  --chat-border:        rgba(255,255,255,0.06);
+  --chat-blur:          0px;
+  --chat-bubble-bg:     rgba(255,255,255,0.05);
+  --chat-bubble-border: rgba(255,255,255,0.07);
+}
+
+/* Neon */
+.chat-widget.theme-neon {
+  --chat-bg:            rgba(5,0,20,0.88);
+  --chat-border:        rgba(130,80,255,0.45);
+  --chat-blur:          28px;
+  --chat-bubble-bg:     rgba(130,80,255,0.10);
+  --chat-bubble-border: rgba(130,80,255,0.25);
+}
+.chat-widget.theme-neon .chat-header-icon {
+  background: #bf94ff;
+  box-shadow: 0 0 8px rgba(191,148,255,0.9);
+}

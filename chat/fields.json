@@ -1,0 +1,59 @@
+{
+  "theme": {
+    "type": "dropdown",
+    "label": "Design / Theme",
+    "value": "dark",
+    "options": {
+      "dark":    "Dark (Standard)",
+      "frosted": "Frosted Glass",
+      "light":   "Light",
+      "minimal": "Minimal",
+      "neon":    "Neon"
+    }
+  },
+  "font_size": {
+    "type": "dropdown",
+    "label": "Schriftgröße",
+    "value": "medium",
+    "options": {
+      "small":  "Klein (12px)",
+      "medium": "Mittel (14px)",
+      "large":  "Groß (16px)"
+    }
+  },
+  "max_messages": {
+    "type": "number",
+    "label": "Max. sichtbare Nachrichten",
+    "value": 6
+  },
+  "auto_hide_secs": {
+    "type": "number",
+    "label": "Auto-Ausblenden nach X Sekunden (0 = immer sichtbar)",
+    "value": 0
+  },
+  "show_avatar": {
+    "type": "checkbox",
+    "label": "Avatar anzeigen",
+    "value": true
+  },
+  "show_badges": {
+    "type": "checkbox",
+    "label": "Abzeichen (Badges) anzeigen",
+    "value": true
+  },
+  "show_role": {
+    "type": "checkbox",
+    "label": "Benutzerrolle anzeigen (Mod, VIP, Sub, Streamer)",
+    "value": true
+  },
+  "show_timestamp": {
+    "type": "checkbox",
+    "label": "Uhrzeit anzeigen",
+    "value": false
+  },
+  "show_header": {
+    "type": "checkbox",
+    "label": "\"Twitch Chat\" Header-Leiste anzeigen",
+    "value": true
+  }
+}
