@@ -227,9 +227,12 @@ window.addEventListener('onEventReceived', function(e) {
   var detail = e.detail;
   if (!detail || !detail.listener) return;
 
-  /* Chat message */
+  /* Chat message — SE wraps real chat data inside event.data;
+     test-button events are flat (event.username etc.) */
   if (detail.listener === 'message') {
-    addMessage(detail.event || {});
+    var ev  = detail.event || {};
+    var msg = ev.data || ev;
+    addMessage(msg);
   }
 });
 
