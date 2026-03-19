@@ -421,19 +421,26 @@ function buildWidgetHtml() {
 function buildFieldsObj() {
   var f = {};
   var defs = [
-    { name: 'theme',           type: 'dropdown', label: 'Design / Theme',                                      value: 'dark',
+    { name: 'theme',              type: 'dropdown',    label: 'Design / Theme',                                         value: 'dark',
       options: { dark: 'Dark (Standard)', frosted: 'Frosted Glass', light: 'Light', minimal: 'Minimal', neon: 'Neon', liquid: 'Liquid Glass \u2728' } },
-    { name: 'font_size',       type: 'dropdown',    label: 'Schriftgröße',                                        value: 'medium',
+    { name: 'font_size',          type: 'dropdown',    label: 'Schriftgröße',                                           value: 'medium',
       options: { small: 'Klein (12px)', medium: 'Mittel (14px)', large: 'Groß (16px)', xl: 'XL (20px)', xxl: 'XXL (24px)', xxxl: 'XXXL (30px)' } },
-    { name: 'font_color',      type: 'colorpicker', label: 'Schriftfarbe (Nachrichtentext)',                      value: 'rgba(255,255,255,0.90)' },
-    { name: 'max_messages',    type: 'number',   label: 'Max. sichtbare Nachrichten',                          value: 6 },
-    { name: 'auto_hide_secs',  type: 'number',   label: 'Auto-Ausblenden nach X Sekunden (0 = immer sichtbar)', value: 0 },
-    { name: 'show_avatar',     type: 'checkbox', label: 'Profilbild / Avatar anzeigen',                        value: true },
-    { name: 'show_badges',     type: 'checkbox', label: 'Abzeichen (Badges) anzeigen',                        value: true },
-    { name: 'show_role',       type: 'checkbox', label: 'Benutzerrolle anzeigen (Mod, VIP, Sub, Streamer)',    value: true },
-    { name: 'show_timestamp',  type: 'checkbox', label: 'Uhrzeit anzeigen',                                   value: false },
-    { name: 'show_header',     type: 'checkbox', label: '"Twitch Chat" Header anzeigen',                      value: true },
-    { name: 'transparent_bg',  type: 'checkbox', label: 'Hintergrund transparent (nur Bubbles sichtbar)',      value: true }
+    { name: 'font_family',        type: 'dropdown',    label: 'Schriftart',                                              value: 'default',
+      options: { default: 'Standard (Inter/Segoe UI)', roboto: 'Roboto', oswald: 'Oswald', montserrat: 'Montserrat', lato: 'Lato', nunito: 'Nunito (rund)', pressstart: 'Press Start 2P (Retro)', bangers: 'Bangers (Comic)' } },
+    { name: 'font_color',         type: 'colorpicker', label: 'Schriftfarbe (Nachrichtentext)',                          value: 'rgba(255,255,255,0.90)' },
+    { name: 'color_broadcaster',  type: 'colorpicker', label: 'Namensfarbe — Streamer/Broadcaster',                     value: '#fbbf24' },
+    { name: 'color_moderator',    type: 'colorpicker', label: 'Namensfarbe — Moderator',                                value: '#22c55e' },
+    { name: 'color_vip',          type: 'colorpicker', label: 'Namensfarbe — VIP',                                      value: '#f472b6' },
+    { name: 'color_subscriber',   type: 'colorpicker', label: 'Namensfarbe — Subscriber',                               value: '#a78bfa' },
+    { name: 'color_viewer',       type: 'colorpicker', label: 'Namensfarbe — Normaler Zuschauer (leer = Twitch-Farbe)', value: '' },
+    { name: 'max_messages',       type: 'number',      label: 'Max. sichtbare Nachrichten',                             value: 6 },
+    { name: 'auto_hide_secs',     type: 'number',      label: 'Auto-Ausblenden nach X Sekunden (0 = immer sichtbar)',   value: 0 },
+    { name: 'show_avatar',        type: 'checkbox',    label: 'Profilbild / Avatar anzeigen',                           value: true },
+    { name: 'show_badges',        type: 'checkbox',    label: 'Abzeichen (Badges) anzeigen',                            value: true },
+    { name: 'show_role',          type: 'checkbox',    label: 'Benutzerrolle anzeigen (Mod, VIP, Sub, Streamer)',        value: true },
+    { name: 'show_timestamp',     type: 'checkbox',    label: 'Uhrzeit anzeigen',                                       value: false },
+    { name: 'show_header',        type: 'checkbox',    label: '"Twitch Chat" Header anzeigen',                          value: true },
+    { name: 'transparent_bg',     type: 'checkbox',    label: 'Hintergrund transparent (nur Bubbles sichtbar)',         value: true }
   ];
   defs.forEach(function(d) {
     var fd = { type: d.type, label: d.label, value: d.value };
@@ -464,10 +471,13 @@ function buildSeWidgetItem() {
       js:        _cachedJS  || '',
       fields:    JSON.stringify(fieldsObj),
       fieldData: {
-        theme: 'dark', font_size: 'medium', max_messages: 6,
-        auto_hide_secs: 0, show_avatar: true, show_badges: true,
-        show_role: true, show_timestamp: false, show_header: true,
-        transparent_bg: true
+        theme: 'dark', font_size: 'medium', font_family: 'default',
+        font_color: 'rgba(255,255,255,0.90)',
+        color_broadcaster: '#fbbf24', color_moderator: '#22c55e',
+        color_vip: '#f472b6', color_subscriber: '#a78bfa', color_viewer: '',
+        max_messages: 6, auto_hide_secs: 0,
+        show_avatar: true, show_badges: true, show_role: true,
+        show_timestamp: false, show_header: true, transparent_bg: true
       },
       expanded:  false,
       uid:       Math.random().toString(36).slice(2, 10)

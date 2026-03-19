@@ -4,17 +4,23 @@
    ============================================================ */
 
 var fields = {
-  max_messages:    6,
-  show_avatar:     true,
-  show_badges:     true,
-  show_role:       true,
-  show_timestamp:  false,
-  show_header:     true,
-  font_size:       'medium',
-  font_color:      'rgba(255,255,255,0.90)',
-  theme:           'dark',
-  auto_hide_secs:  0,
-  transparent_bg:  true
+  max_messages:       6,
+  show_avatar:        true,
+  show_badges:        true,
+  show_role:          true,
+  show_timestamp:     false,
+  show_header:        true,
+  font_size:          'medium',
+  font_color:         'rgba(255,255,255,0.90)',
+  font_family:        'default',
+  theme:              'dark',
+  auto_hide_secs:     0,
+  transparent_bg:     true,
+  color_broadcaster:  '#fbbf24',
+  color_moderator:    '#22c55e',
+  color_vip:          '#f472b6',
+  color_subscriber:   '#a78bfa',
+  color_viewer:       ''
 };
 
 var _hideTimer  = null;
@@ -108,6 +114,18 @@ function resetHideTimer() {
   _hideTimer = setTimeout(hideWidget, secs * 1000);
 }
 
+/* ---- Detect role from badges ---- */
+function detectRole(badges) {
+  for (var i = 0; i < badges.length; i++) {
+    var t = (badges[i].type || '').toLowerCase();
+    if (t === 'broadcaster') return 'broadcaster';
+    if (t === 'moderator')   return 'moderator';
+    if (t === 'vip')         return 'vip';
+    if (t === 'subscriber')  return 'subscriber';
+  }
+  return 'viewer';
+}
+
 /* ---- Add message ---- */
 function addMessage(data) {
   var container = document.getElementById('chat-messages');
@@ -126,18 +144,20 @@ function addMessage(data) {
   var displayName = data.displayName || data.name || data.username || data.nick || 'User';
   var text        = data.renderedText || data.text || '';
   var badges      = data.badges || [];
-  var tagColor    = (data.tags && data.tags.color) || (data.tags && data.tags['display-name'] && data.color) || null;
-  var userColor   = (tagColor && tagColor !== '#000000' && tagColor !== '') ? tagColor : usernameColor(displayName);
-  var role        = ''; /* role shown via badge icons, not text pill */
-  var roleHtml    = '';  /* kept for template compatibility */
+  var tagColor    = (data.tags && data.tags.color) || null;
   var initial     = displayName.charAt(0).toUpperCase();
   var avatarBg    = usernameColor(displayName);
 
-  /* Avatar — SE provides avatar URL directly on real chat events;
-     fall back to colored initial when absent or image fails to load */
-  /* Avatar — SE doesn't send avatar URLs in chat events, so we use
-     unavatar.io as a reliable Twitch profile picture proxy.
-     SE-provided avatar field is used first if ever present. */
+  /* Name color: role color > Twitch tag color > username hash */
+  var role      = detectRole(badges);
+  var roleColor = fields['color_' + role];
+  var userColor = (roleColor && roleColor !== '')
+    ? roleColor
+    : (tagColor && tagColor !== '#000000' && tagColor !== '') ? tagColor : usernameColor(displayName);
+
+  /* Avatar — merge top-level and nested data to catch avatar at either level.
+     SE provides profileImage / avatar on event.data for real Twitch chat.
+     unavatar.io is the fallback proxy when SE doesn't supply it. */
   var avatarHtml = '';
   if (fields.show_avatar) {
     var uname  = (data.username || data.name || displayName).toLowerCase().replace(/[^a-z0-9_]/g, '');
@@ -166,7 +186,6 @@ function addMessage(data) {
       '<div class="chat-meta">' +
         renderBadges(badges) +
         '<span class="chat-name" style="color:' + userColor + '">' + esc(displayName) + '</span>' +
-        roleHtml +
       '</div>' +
       '<div class="chat-text">' + text + '</div>' +
       timeHtml +
@@ -194,6 +213,27 @@ function addMessage(data) {
 }
 
 /* ---- Apply theme + appearance ---- */
+var _fontLinkEl = null;
+var GOOGLE_FONTS = {
+  roboto:       'Roboto',
+  oswald:       'Oswald',
+  montserrat:   'Montserrat',
+  lato:         'Lato',
+  nunito:       'Nunito',
+  pressstart:   'Press+Start+2P',
+  bangers:      'Bangers'
+};
+var FONT_STACKS = {
+  default:    "'Inter', 'Segoe UI', sans-serif",
+  roboto:     "'Roboto', sans-serif",
+  oswald:     "'Oswald', sans-serif",
+  montserrat: "'Montserrat', sans-serif",
+  lato:       "'Lato', sans-serif",
+  nunito:     "'Nunito', sans-serif",
+  pressstart: "'Press Start 2P', cursive",
+  bangers:    "'Bangers', cursive"
+};
+
 function applyAppearance() {
   var root    = document.documentElement;
   var widget  = document.getElementById('chat-widget');
@@ -205,6 +245,18 @@ function applyAppearance() {
   if (fields.font_color) {
     root.style.setProperty('--chat-text-color', fields.font_color);
   }
+
+  /* Font family — load Google Font if needed */
+  var ff = fields.font_family || 'default';
+  if (ff !== 'default' && GOOGLE_FONTS[ff]) {
+    if (!_fontLinkEl) {
+      _fontLinkEl = document.createElement('link');
+      _fontLinkEl.rel = 'stylesheet';
+      document.head.appendChild(_fontLinkEl);
+    }
+    _fontLinkEl.href = 'https://fonts.googleapis.com/css2?family=' + GOOGLE_FONTS[ff] + '&display=swap';
+  }
+  root.style.setProperty('--chat-font', FONT_STACKS[ff] || FONT_STACKS.default);
 
   /* Theme class */
   widget.classList.remove('theme-frosted','theme-light','theme-minimal','theme-neon','theme-liquid','theme-dark');
@@ -237,11 +289,11 @@ window.addEventListener('onEventReceived', function(e) {
   var detail = e.detail;
   if (!detail || !detail.listener) return;
 
-  /* Chat message — SE wraps real chat data inside event.data;
-     test-button events are flat (event.username etc.) */
   if (detail.listener === 'message') {
-    var ev  = detail.event || {};
-    var msg = ev.data || ev;
+    var ev = detail.event || {};
+    /* Merge top-level event fields with nested data object so avatar/profileImage
+       is found regardless of which level SE places it at */
+    var msg = ev.data ? Object.assign({}, ev, ev.data) : ev;
     addMessage(msg);
   }
 });

@@ -25,10 +25,50 @@
       "xxxl":   "XXXL (30px)"
     }
   },
+  "font_family": {
+    "type": "dropdown",
+    "label": "Schriftart",
+    "value": "default",
+    "options": {
+      "default":    "Standard (Inter/Segoe UI)",
+      "roboto":     "Roboto",
+      "oswald":     "Oswald",
+      "montserrat": "Montserrat",
+      "lato":       "Lato",
+      "nunito":     "Nunito (rund)",
+      "pressstart": "Press Start 2P (Retro)",
+      "bangers":    "Bangers (Comic)"
+    }
+  },
   "font_color": {
     "type": "colorpicker",
     "label": "Schriftfarbe (Nachrichtentext)",
     "value": "rgba(255,255,255,0.90)"
+  },
+  "color_broadcaster": {
+    "type": "colorpicker",
+    "label": "Namensfarbe — Streamer/Broadcaster",
+    "value": "#fbbf24"
+  },
+  "color_moderator": {
+    "type": "colorpicker",
+    "label": "Namensfarbe — Moderator",
+    "value": "#22c55e"
+  },
+  "color_vip": {
+    "type": "colorpicker",
+    "label": "Namensfarbe — VIP",
+    "value": "#f472b6"
+  },
+  "color_subscriber": {
+    "type": "colorpicker",
+    "label": "Namensfarbe — Subscriber",
+    "value": "#a78bfa"
+  },
+  "color_viewer": {
+    "type": "colorpicker",
+    "label": "Namensfarbe — Normaler Zuschauer (leer = Twitch-Farbe)",
+    "value": ""
   },
   "max_messages": {
     "type": "number",
