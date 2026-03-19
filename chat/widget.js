@@ -120,11 +120,17 @@ function addMessage(data) {
   var initial     = displayName.charAt(0).toUpperCase();
   var avatarBg    = usernameColor(displayName);
 
-  /* Avatar */
+  /* Avatar — try Twitch profile picture, fall back to colored initial */
   var avatarHtml = '';
   if (fields.show_avatar) {
-    avatarHtml = '<div class="chat-avatar" style="background:' + avatarBg + '" title="' + esc(displayName) + '">'
-               + initial + '</div>';
+    var username = (data.username || displayName).toLowerCase().replace(/[^a-z0-9_]/g, '');
+    var imgUrl   = data.avatar || ('https://unavatar.io/twitch/' + username + '?fallback=false');
+    avatarHtml =
+      '<div class="chat-avatar chat-avatar-wrap" style="background:' + avatarBg + '" title="' + esc(displayName) + '">' +
+        '<img class="chat-avatar-img" src="' + imgUrl + '" alt="" ' +
+          'onerror="this.style.display=\'none\';this.parentNode.classList.add(\'chat-avatar-fallback\')">' +
+        '<span class="chat-avatar-initial">' + initial + '</span>' +
+      '</div>';
   }
 
   /* Role pill */

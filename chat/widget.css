@@ -145,7 +145,30 @@ body {
   margin-top: 1px;
   text-shadow: 0 1px 3px rgba(0,0,0,0.4);
   border: 1.5px solid rgba(255,255,255,0.15);
+  overflow: hidden;
+  position: relative;
 }
+
+/* Profile picture fills the avatar circle */
+.chat-avatar-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* Initial letter — hidden when image loads, shown on error */
+.chat-avatar-initial {
+  position: relative;
+  z-index: 1;
+  display: none; /* hidden by default — image takes over */
+}
+
+/* When image fails: show initial, hide broken image slot */
+.chat-avatar-fallback .chat-avatar-img    { display: none; }
+.chat-avatar-fallback .chat-avatar-initial { display: block; }
 
 /* ---- Bubble ---- */
 .chat-bubble {
