@@ -123,22 +123,24 @@ function addMessage(data) {
   var initial     = displayName.charAt(0).toUpperCase();
   var avatarBg    = usernameColor(displayName);
 
-  /* Avatar — SE avatar field > Twitch CDN lookup > colored initial fallback */
+  /* Avatar — SE provides avatar URL directly on real chat events;
+     fall back to colored initial when absent or image fails to load */
   var avatarHtml = '';
   if (fields.show_avatar) {
-    var uname  = (data.username || data.name || displayName).toLowerCase().replace(/[^a-z0-9_]/g, '');
-    /* SE sometimes provides avatar directly; otherwise use twitch-avatar proxy */
-    var imgUrl = data.avatar
-              || ('https://api.twitch.tv/helix/users?login=' + uname)  /* won't work without token — skip to fallback */
-              || '';
-    /* Most reliable public proxy for Twitch avatars */
-    imgUrl = data.avatar || ('https://avatar.cxl.sh/twitch/' + uname);
-    avatarHtml =
-      '<div class="chat-avatar chat-avatar-wrap" style="background:' + avatarBg + '" title="' + esc(displayName) + '">' +
-        '<img class="chat-avatar-img" src="' + imgUrl + '" alt="" ' +
-          'onerror="this.style.display=\'none\';this.parentNode.classList.add(\'chat-avatar-fallback\')">' +
-        '<span class="chat-avatar-initial">' + initial + '</span>' +
-      '</div>';
+    var imgUrl = data.avatar || data.profileImage || data.profile_image_url || '';
+    if (imgUrl) {
+      avatarHtml =
+        '<div class="chat-avatar chat-avatar-wrap" style="background:' + avatarBg + '" title="' + esc(displayName) + '">' +
+          '<img class="chat-avatar-img" src="' + imgUrl + '" alt="" ' +
+            'onerror="this.style.display=\'none\';this.parentNode.classList.add(\'chat-avatar-fallback\')">' +
+          '<span class="chat-avatar-initial">' + initial + '</span>' +
+        '</div>';
+    } else {
+      avatarHtml =
+        '<div class="chat-avatar chat-avatar-wrap chat-avatar-fallback" style="background:' + avatarBg + '" title="' + esc(displayName) + '">' +
+          '<span class="chat-avatar-initial">' + initial + '</span>' +
+        '</div>';
+    }
   }
 
   /* Timestamp */
@@ -190,7 +192,7 @@ function applyAppearance() {
   if (!widget) return;
 
   /* Font size + color */
-  var fsMap = { small: '12px', medium: '14px', large: '16px' };
+  var fsMap = { small: '12px', medium: '14px', large: '16px', xl: '20px', xxl: '24px', xxxl: '30px' };
   root.style.setProperty('--chat-font-size',  fsMap[fields.font_size] || '14px');
   if (fields.font_color) {
     root.style.setProperty('--chat-text-color', fields.font_color);

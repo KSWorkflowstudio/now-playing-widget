@@ -19,7 +19,10 @@
     "options": {
       "small":  "Klein (12px)",
       "medium": "Mittel (14px)",
-      "large":  "Groß (16px)"
+      "large":  "Groß (16px)",
+      "xl":     "XL (20px)",
+      "xxl":    "XXL (24px)",
+      "xxxl":   "XXXL (30px)"
     }
   },
   "font_color": {
