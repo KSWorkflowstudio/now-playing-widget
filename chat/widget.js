@@ -218,10 +218,10 @@ window.addEventListener('onEventReceived', function(e) {
 var _testNames = ['StreamerFan92','LunaPlays','xXDarkWolfXx','cozyvibes','TwitchUser'];
 var _testMsgs  = [
   'Hype hype hype!! PogChamp',
-  'Was ein krasser Stream heute 🔥',
+  'Was ein krasser Stream heute :fire:',
   'gg ez keine chance gehabt LUL',
-  'Wann kommt der nächste Drop?',
-  'Erster Kommentar seit 3 Stunden 😅'
+  'Wann kommt der naechste Drop?',
+  'Erster Kommentar seit 3 Stunden xD'
 ];
 var _testRoles = [
   [{ type: 'broadcaster', url: '' }],
