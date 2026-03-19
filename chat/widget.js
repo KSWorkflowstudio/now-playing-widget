@@ -185,7 +185,7 @@ function applyAppearance() {
   root.style.setProperty('--chat-font-size', fsMap[fields.font_size] || '14px');
 
   /* Theme class */
-  widget.classList.remove('theme-frosted','theme-light','theme-minimal','theme-neon','theme-dark');
+  widget.classList.remove('theme-frosted','theme-light','theme-minimal','theme-neon','theme-liquid','theme-dark');
   if (fields.theme && fields.theme !== 'dark') {
     widget.classList.add('theme-' + fields.theme);
   }

@@ -8,7 +8,8 @@
       "frosted": "Frosted Glass",
       "light":   "Light",
       "minimal": "Minimal",
-      "neon":    "Neon"
+      "neon":    "Neon",
+      "liquid":  "Liquid Glass \u2728"
     }
   },
   "font_size": {

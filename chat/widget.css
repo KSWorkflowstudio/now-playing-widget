@@ -293,3 +293,21 @@ body {
   background: #bf94ff;
   box-shadow: 0 0 8px rgba(191,148,255,0.9);
 }
+
+/* Liquid Glass */
+.chat-widget.theme-liquid {
+  --chat-bg:            rgba(255,255,255,0.08);
+  --chat-border:        rgba(255,255,255,0.30);
+  --chat-blur:          40px;
+  --chat-bubble-bg:     rgba(255,255,255,0.08);
+  --chat-bubble-border: rgba(255,255,255,0.25);
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.13) 0%,
+    rgba(255,255,255,0.05) 50%,
+    rgba(255,255,255,0.10) 100%
+  );
+  box-shadow: 0 8px 40px rgba(0,0,0,0.35),
+              inset 0 1px 0 rgba(255,255,255,0.35),
+              inset 0 -1px 0 rgba(0,0,0,0.10);
+}
