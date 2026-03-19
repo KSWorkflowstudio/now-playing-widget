@@ -7,31 +7,34 @@
 
 /* ---------- Config defaults (overridden by SE fieldData) ---------- */
 var fields = {
-  lastfm_user:   '',
-  lastfm_key:    '',
-  theme:         'dark',
-  shape:         'default',
-  animation:     'ios',
-  show_album:    true,
-  show_bars:     true,
-  show_label:    true,
-  font_size:     'medium',
-  custom_width:  0,
-  custom_radius: 0,
-  custom_blur:   0
+  lastfm_user:    '',
+  lastfm_key:     '',
+  theme:          'dark',
+  shape:          'default',
+  animation:      'ios',
+  show_album:     true,
+  show_bars:      true,
+  show_label:     true,
+  font_size:      'medium',
+  custom_width:   0,
+  custom_radius:  0,
+  custom_blur:    0,
+  auto_hide_secs: 0   /* 0 = always visible; >0 = hide after N seconds */
 };
 
 var DEFAULT_ART = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"%3E%3Crect width="72" height="72" fill="%23222"%2F%3E%3Ccircle cx="36" cy="36" r="14" fill="%23444"%2F%3E%3Ccircle cx="36" cy="36" r="5" fill="%23222"%2F%3E%3C%2Fsvg%3E';
 
 /* ---------- State ---------- */
-var lastTrackId  = null;
-var lastArtUrl   = null;
-var progressMs   = 0;
-var durationMs   = 0;
-var isPlaying    = false;
-var cardVisible  = false;
+var lastTrackId      = null;
+var autoHiddenTrackId= null;  /* trackId that triggered auto-hide; null = not auto-hidden */
+var autoHideTimer    = null;
+var lastArtUrl       = null;
+var progressMs       = 0;
+var durationMs       = 0;
+var isPlaying        = false;
+var cardVisible      = false;
 var progressInterval = null;
-var pollTimer    = null;
+var pollTimer        = null;
 
 /* ---------- Helpers ---------- */
 var root    = document.documentElement;
@@ -148,6 +151,18 @@ function hideCard() {
   });
 }
 
+/* Start/reset the auto-hide countdown. No-op when auto_hide_secs === 0. */
+function scheduleAutoHide() {
+  if (autoHideTimer) { clearTimeout(autoHideTimer); autoHideTimer = null; }
+  var secs = parseInt(fields.auto_hide_secs, 10);
+  if (!secs || secs <= 0) return;
+  autoHideTimer = setTimeout(function () {
+    autoHideTimer    = null;
+    autoHiddenTrackId = lastTrackId; /* remember so same track doesn't re-show */
+    hideCard();
+  }, secs * 1000);
+}
+
 function bumpTrack() {
   removeAnimClasses();
   void cardEl.offsetWidth;
@@ -220,7 +235,7 @@ function renderProgress() {
 
 /* ---------- Show track ---------- */
 function showTrack(data) {
-  var trackId = (data.artist || '') + '|' + (data.title || '');
+  var trackId    = (data.artist || '') + '|' + (data.title || '');
   var isNewTrack = (trackId !== lastTrackId);
 
   // Update text content
@@ -230,13 +245,7 @@ function showTrack(data) {
 
   // Playing state
   isPlaying = !!data.isPlaying;
-  if (cardEl) {
-    if (isPlaying) {
-      cardEl.classList.remove('np-paused');
-    } else {
-      cardEl.classList.add('np-paused');
-    }
-  }
+  if (cardEl) cardEl.classList.toggle('np-paused', !isPlaying);
 
   // Progress
   progressMs = data.progressMs || 0;
@@ -244,18 +253,29 @@ function showTrack(data) {
   renderProgress();
   startProgress();
 
-  if (!cardVisible) {
-    // Card hidden → slide in from top (iPhone notification style)
-    lastTrackId = trackId;
+  if (isNewTrack) {
+    /* ── New song: always show (even if auto-hidden), reset timer ── */
+    lastTrackId       = trackId;
+    autoHiddenTrackId = null;
+    if (autoHideTimer) { clearTimeout(autoHideTimer); autoHideTimer = null; }
     crossfadeArt(data.artUrl);
-    showCard();
-  } else if (isNewTrack) {
-    // New track while card is showing → bump animation + crossfade art
-    lastTrackId = trackId;
-    crossfadeArt(data.artUrl);
-    bumpTrack();
+    if (!cardVisible) {
+      showCard();
+    } else {
+      bumpTrack();
+    }
+    scheduleAutoHide();
+  } else if (!cardVisible) {
+    /* ── Same track, card currently hidden ── */
+    if (trackId !== autoHiddenTrackId) {
+      /* Hidden because song paused/stopped, now resumed → show again */
+      crossfadeArt(data.artUrl);
+      showCard();
+      scheduleAutoHide();
+    }
+    /* If auto-hidden (autoHiddenTrackId === trackId): stay hidden until next song */
   } else {
-    // Same track update (progress tick, play/pause)
+    /* ── Same track, card visible: just update art ── */
     crossfadeArt(data.artUrl);
   }
 }

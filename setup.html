@@ -809,6 +809,7 @@ function applyUrlParams() {
   _settings.showBars  = p.get('bars')  !== '0';
   _settings.showLabel = p.get('label') !== '0';
   _settings.showAlbum = p.get('album') !== '0';
+  _settings.autoHide  = parseInt(p.get('hide') || '0', 10) || 0;
   _settings.shareId   = p.get('share') || null;
 }
 
@@ -930,9 +931,10 @@ function buildFieldsArray() {
     { name: 'show_bars',     type: 'checkbox', label: 'EQ-Balken anzeigen',             value: _settings.showBars  !== false },
     { name: 'show_label',    type: 'checkbox', label: '"Now Playing" Label anzeigen',   value: _settings.showLabel !== false },
     { name: 'show_album',    type: 'checkbox', label: 'Album anzeigen',                 value: _settings.showAlbum !== false },
-    { name: 'custom_width',  type: 'number',   label: 'Breite (px, 0 = Standard)',      value: 0 },
-    { name: 'custom_radius', type: 'number',   label: 'Eckenradius (px, 0 = Standard)', value: 0 },
-    { name: 'custom_blur',   type: 'number',   label: 'Blur (px, 0 = Standard)',        value: 0 }
+    { name: 'custom_width',   type: 'number',   label: 'Breite (px, 0 = Standard)',                           value: 0 },
+    { name: 'custom_radius',  type: 'number',   label: 'Eckenradius (px, 0 = Standard)',                      value: 0 },
+    { name: 'custom_blur',    type: 'number',   label: 'Blur (px, 0 = Standard)',                             value: 0 },
+    { name: 'auto_hide_secs', type: 'number',   label: 'Auto-Ausblenden nach (Sekunden, 0 = immer sichtbar)', value: _settings.autoHide || 0 }
   ];
 }
 
@@ -1008,9 +1010,10 @@ function connectAndInstall() {
     show_bars:     _settings.showBars  !== false,
     show_label:    _settings.showLabel !== false,
     show_album:    _settings.showAlbum !== false,
-    custom_width:  0,
-    custom_radius: 0,
-    custom_blur:   0
+    custom_width:   0,
+    custom_radius:  0,
+    custom_blur:    0,
+    auto_hide_secs: _settings.autoHide || 0
   };
 
   /* Convert fields array → SE's required object format (JSON string) */

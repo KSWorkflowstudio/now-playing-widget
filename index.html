@@ -411,6 +411,13 @@ details.setup-details[open] summary::before { content: '▾ '; }
           <input type="checkbox" id="chk-album" checked>
         </div>
       </div>
+
+      <div class="field" style="margin-top:10px">
+        <label for="inp-autohide">Auto-Ausblenden nach (Sekunden)</label>
+        <input type="number" id="inp-autohide" value="0" min="0" step="1"
+          placeholder="0 = immer sichtbar" oninput="rebuildCode()">
+        <div class="field-hint">0 = Widget bleibt immer sichtbar · z.B. 10 = wird nach 10 Sek. ausgeblendet, erscheint wieder beim nächsten Song</div>
+      </div>
     </div>
 
   </div>
@@ -1333,9 +1340,10 @@ function buildFieldsJson() {
     { name: 'show_bars',     type: 'checkbox', label: 'EQ-Balken anzeigen',             value: true },
     { name: 'show_label',    type: 'checkbox', label: '"Now Playing" Label anzeigen',   value: true },
     { name: 'show_album',    type: 'checkbox', label: 'Album anzeigen',                 value: true },
-    { name: 'custom_width',  type: 'number',   label: 'Breite (px, 0 = Standard)',      value: 0 },
-    { name: 'custom_radius', type: 'number',   label: 'Eckenradius (px, 0 = Standard)', value: 0 },
-    { name: 'custom_blur',   type: 'number',   label: 'Blur (px, 0 = Standard)',        value: 0 }
+    { name: 'custom_width',   type: 'number',   label: 'Breite (px, 0 = Standard)',                           value: 0 },
+    { name: 'custom_radius',  type: 'number',   label: 'Eckenradius (px, 0 = Standard)',                      value: 0 },
+    { name: 'custom_blur',    type: 'number',   label: 'Blur (px, 0 = Standard)',                             value: 0 },
+    { name: 'auto_hide_secs', type: 'number',   label: 'Auto-Ausblenden nach (Sekunden, 0 = immer sichtbar)', value: parseInt(document.getElementById('inp-autohide').value||'0',10)||0 }
   ], null, 2);
 }
 
@@ -1505,6 +1513,7 @@ function downloadSeOverlay() {
   var showBars  = document.getElementById('chk-bars').checked;
   var showLabel = document.getElementById('chk-label').checked;
   var showAlbum = document.getElementById('chk-album').checked;
+  var autoHide  = parseInt(document.getElementById('inp-autohide').value || '0', 10) || 0;
 
   /* Generate a simple random ID for the overlay items */
   function randId() {
@@ -1549,12 +1558,13 @@ function downloadSeOverlay() {
             shape:         shape,
             animation:     anim,
             font_size:     fs,
-            show_bars:     showBars,
-            show_label:    showLabel,
-            show_album:    showAlbum,
-            custom_width:  0,
-            custom_radius: 0,
-            custom_blur:   0
+            show_bars:      showBars,
+            show_label:     showLabel,
+            show_album:     showAlbum,
+            custom_width:   0,
+            custom_radius:  0,
+            custom_blur:    0,
+            auto_hide_secs: autoHide
           }
         }
       }
@@ -1604,6 +1614,7 @@ function downloadAll() {
 ['chk-bars','chk-label','chk-album'].forEach(function(id) {
   document.getElementById(id).addEventListener('change', function() { rebuildCode(); });
 });
+document.getElementById('inp-autohide').addEventListener('input', function() { rebuildCode(); });
 ['inp-user','inp-key'].forEach(function(id) {
   document.getElementById(id).addEventListener('input', function() { rebuildCode(); });
 });
@@ -1620,6 +1631,7 @@ function applyUrlParams() {
   if (p.get('bars')  !== null) document.getElementById('chk-bars').checked  = p.get('bars')  !== '0';
   if (p.get('label') !== null) document.getElementById('chk-label').checked = p.get('label') !== '0';
   if (p.get('album') !== null) document.getElementById('chk-album').checked = p.get('album') !== '0';
+  if (p.get('hide')  !== null) document.getElementById('inp-autohide').value = p.get('hide') || '0';
 }
 
 /* ---- Generate shareable config URL (points to setup.html for customers) ---- */
@@ -1643,6 +1655,8 @@ function generateConfigUrl() {
   p.set('bars',  document.getElementById('chk-bars').checked  ? '1' : '0');
   p.set('label', document.getElementById('chk-label').checked ? '1' : '0');
   p.set('album', document.getElementById('chk-album').checked ? '1' : '0');
+  var autoHide = parseInt(document.getElementById('inp-autohide').value || '0', 10);
+  if (autoHide > 0) p.set('hide', String(autoHide));
   var shareId = (document.getElementById('inp-share-id').value || '').trim();
   if (shareId) p.set('share', shareId);
   var url = base + '?' + p.toString();

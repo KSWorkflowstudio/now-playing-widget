@@ -97,5 +97,11 @@
     "type": "number",
     "label": "Blur-Stärke (px, 0 = Standard 28px)",
     "value": 0
+  },
+  {
+    "name": "auto_hide_secs",
+    "type": "number",
+    "label": "Auto-Ausblenden nach (Sekunden, 0 = immer sichtbar)",
+    "value": 0
   }
 ]
