@@ -339,10 +339,15 @@ details.setup-details[open] summary::before { content: '▾ '; }
         <input type="text" id="inp-key" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off">
         <div class="field-hint"><a href="https://www.last.fm/api/account/create" target="_blank">→ Kostenlosen API Key erstellen</a></div>
       </div>
-      <button class="btn btn-secondary" id="btn-copy-url" onclick="generateConfigUrl()" style="width:100%;margin-top:4px;justify-content:center;font-size:0.8rem">
-        🔗 Konfig-Link generieren &amp; kopieren
-      </button>
-      <p style="margin-top:6px;font-size:0.72rem;color:#334155;line-height:1.4">Tipp: Link öffnet die Kunden-Seite mit Widget-Vorschau. Falls eine SE Overlay-ID hinterlegt ist, bekommen Kunden einen 1-Click-Install-Button — ohne Token-Eingabe ⚡</p>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-secondary" id="btn-copy-url" onclick="generateConfigUrl()" style="flex:1;justify-content:center;font-size:0.8rem">
+          🔗 SE Kunden-Link
+        </button>
+        <button class="btn btn-primary" id="btn-copy-obs" onclick="generateObsUrl()" style="flex:1;justify-content:center;font-size:0.8rem">
+          🎬 OBS-Direktlink
+        </button>
+      </div>
+      <p style="margin-top:6px;font-size:0.72rem;color:#475569;line-height:1.5"><strong style="color:#a5b4fc">OBS-Direktlink</strong> → Kunde fügt die URL direkt als Browser Source in OBS ein (400×120) — kein SE-Account, kein Token nötig.<br><strong style="color:#94a3b8">SE Kunden-Link</strong> → Installation über StreamElements (braucht SE-Account).</p>
     </div>
 
     <!-- ② Design-Einstellungen -->
@@ -1649,6 +1654,41 @@ function generateConfigUrl() {
   }).catch(function() {
     prompt('Link (manuell kopieren):', url);
   });
+}
+
+/* ---- Generate OBS direct URL (widget.html with params) ---- */
+function generateObsUrl() {
+  var base = window.location.href.split('?')[0].split('#')[0];
+  if (base.startsWith('file://')) {
+    alert('⚠️ Dieser Link funktioniert nur auf GitHub Pages, nicht lokal.');
+    return;
+  }
+  var widgetBase = base.replace(/\/[^/]*$/, '') + '/streamelements/widget.html';
+  var p = new URLSearchParams();
+  var user = document.getElementById('inp-user').value.trim();
+  var key  = document.getElementById('inp-key').value.trim();
+  if (!user || !key) { alert('Bitte Last.fm Benutzername und API Key eingeben.'); return; }
+  p.set('user',  user);
+  p.set('key',   key);
+  p.set('theme', document.getElementById('sel-theme').value);
+  p.set('shape', document.getElementById('sel-shape').value);
+  p.set('anim',  document.getElementById('sel-anim').value);
+  p.set('fs',    document.getElementById('sel-fontsize').value);
+  p.set('bars',  document.getElementById('chk-bars').checked  ? '1' : '0');
+  p.set('label', document.getElementById('chk-label').checked ? '1' : '0');
+  p.set('album', document.getElementById('chk-album').checked ? '1' : '0');
+  var autoHide  = parseInt(document.getElementById('inp-autohide').value || '0', 10);
+  if (autoHide > 0) p.set('hide', String(autoHide));
+  var textAlign = document.getElementById('sel-textalign').value || 'left';
+  if (textAlign !== 'left') p.set('align', textAlign);
+  var url = widgetBase + '?' + p.toString();
+  navigator.clipboard.writeText(url).then(function () {
+    var btn = document.getElementById('btn-copy-obs');
+    var orig = btn.textContent;
+    btn.textContent = '✓ Link kopiert!';
+    btn.style.background = '#22c55e'; btn.style.color = '#fff';
+    setTimeout(function () { btn.textContent = orig; btn.style.background = ''; btn.style.color = ''; }, 2000);
+  }).catch(function () { prompt('OBS-Link (manuell kopieren):', url); });
 }
 
 /* ---- SE Share ID (localStorage persistence) ---- */

@@ -23,6 +23,24 @@ var fields = {
   text_align:     'left'
 };
 
+/* Read config from URL params — standalone OBS direct mode */
+(function () {
+  try {
+    var p = new URLSearchParams(window.location.search);
+    if (p.get('user'))  fields.lastfm_user    = p.get('user');
+    if (p.get('key'))   fields.lastfm_key     = p.get('key');
+    if (p.get('theme')) fields.theme          = p.get('theme');
+    if (p.get('shape')) fields.shape          = p.get('shape');
+    if (p.get('anim'))  fields.animation      = p.get('anim');
+    if (p.get('align')) fields.text_align     = p.get('align');
+    if (p.get('fs'))    fields.font_size      = p.get('fs');
+    var hide  = p.get('hide');  if (hide  !== null) fields.auto_hide_secs = parseInt(hide,  10) || 0;
+    var bars  = p.get('bars');  if (bars  !== null) fields.show_bars      = bars  !== '0';
+    var label = p.get('label'); if (label !== null) fields.show_label     = label !== '0';
+    var album = p.get('album'); if (album !== null) fields.show_album     = album !== '0';
+  } catch (e) {}
+})();
+
 var DEFAULT_ART = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"%3E%3Crect width="72" height="72" fill="%23222"%2F%3E%3Ccircle cx="36" cy="36" r="14" fill="%23444"%2F%3E%3Ccircle cx="36" cy="36" r="5" fill="%23222"%2F%3E%3C%2Fsvg%3E';
 
 /* ---------- State ---------- */
