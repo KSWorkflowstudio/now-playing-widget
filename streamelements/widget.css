@@ -32,6 +32,9 @@
   --np-transition-ms:500;
 
   --np-body-bg:      transparent;
+
+  --np-text-align:     left;       /* text alignment: left | center | right */
+  --np-status-justify: flex-start; /* mirrors text-align for the flex status row */
 }
 
 /* ---------- Reset / Base ---------- */
@@ -204,6 +207,7 @@ body {
 .np-status {
   display: flex;
   align-items: center;
+  justify-content: var(--np-status-justify);
   gap: 6px;
   margin-bottom: 4px;
 }
@@ -254,6 +258,7 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: var(--np-text-align);
 }
 
 .np-artist {
@@ -262,6 +267,7 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: var(--np-text-align);
 }
 
 .np-album {
@@ -270,6 +276,7 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: var(--np-text-align);
 }
 
 /* ---------- Progress bar ---------- */

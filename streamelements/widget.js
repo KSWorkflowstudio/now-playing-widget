@@ -19,7 +19,8 @@ var fields = {
   custom_width:   0,
   custom_radius:  0,
   custom_blur:    0,
-  auto_hide_secs: 0   /* 0 = always visible; >0 = hide after N seconds */
+  auto_hide_secs: 0,  /* 0 = always visible; >0 = hide after N seconds */
+  text_align:     'left'
 };
 
 var DEFAULT_ART = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"%3E%3Crect width="72" height="72" fill="%23222"%2F%3E%3Ccircle cx="36" cy="36" r="14" fill="%23444"%2F%3E%3Ccircle cx="36" cy="36" r="5" fill="%23222"%2F%3E%3C%2Fsvg%3E';
@@ -116,6 +117,13 @@ function applyAppearance() {
     root.style.setProperty('--np-artist-size', (parseInt(fs) - 3) + 'px');
     root.style.setProperty('--np-album-size',  (parseInt(fs) - 5) + 'px');
   }
+
+  // Text alignment
+  var alignMap = { left: 'left', center: 'center', right: 'right' };
+  var align = alignMap[fields.text_align] || 'left';
+  var justifyMap = { left: 'flex-start', center: 'center', right: 'flex-end' };
+  root.style.setProperty('--np-text-align',     align);
+  root.style.setProperty('--np-status-justify', justifyMap[align] || 'flex-start');
 }
 
 /* ---------- iPhone-style animation helpers ---------- */

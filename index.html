@@ -418,6 +418,15 @@ details.setup-details[open] summary::before { content: '▾ '; }
           placeholder="0 = immer sichtbar" oninput="rebuildCode()">
         <div class="field-hint">0 = Widget bleibt immer sichtbar · z.B. 10 = wird nach 10 Sek. ausgeblendet, erscheint wieder beim nächsten Song</div>
       </div>
+
+      <div class="field" style="margin-top:10px">
+        <label for="sel-textalign">Textausrichtung</label>
+        <select id="sel-textalign" onchange="rebuildCode()">
+          <option value="left">Linksbündig</option>
+          <option value="center">Zentriert</option>
+          <option value="right">Rechtsbündig</option>
+        </select>
+      </div>
     </div>
 
   </div>
@@ -1343,7 +1352,9 @@ function buildFieldsJson() {
     { name: 'custom_width',   type: 'number',   label: 'Breite (px, 0 = Standard)',                           value: 0 },
     { name: 'custom_radius',  type: 'number',   label: 'Eckenradius (px, 0 = Standard)',                      value: 0 },
     { name: 'custom_blur',    type: 'number',   label: 'Blur (px, 0 = Standard)',                             value: 0 },
-    { name: 'auto_hide_secs', type: 'number',   label: 'Auto-Ausblenden nach (Sekunden, 0 = immer sichtbar)', value: parseInt(document.getElementById('inp-autohide').value||'0',10)||0 }
+    { name: 'auto_hide_secs', type: 'number',   label: 'Auto-Ausblenden nach (Sekunden, 0 = immer sichtbar)', value: parseInt(document.getElementById('inp-autohide').value||'0',10)||0 },
+    { name: 'text_align',     type: 'dropdown', label: 'Textausrichtung', value: document.getElementById('sel-textalign').value || 'left',
+      options: { left: 'Linksbündig', center: 'Zentriert', right: 'Rechtsbündig' } }
   ], null, 2);
 }
 
@@ -1514,6 +1525,7 @@ function downloadSeOverlay() {
   var showLabel = document.getElementById('chk-label').checked;
   var showAlbum = document.getElementById('chk-album').checked;
   var autoHide  = parseInt(document.getElementById('inp-autohide').value || '0', 10) || 0;
+  var textAlign = document.getElementById('sel-textalign').value || 'left';
 
   /* Generate a simple random ID for the overlay items */
   function randId() {
@@ -1564,7 +1576,8 @@ function downloadSeOverlay() {
             custom_width:   0,
             custom_radius:  0,
             custom_blur:    0,
-            auto_hide_secs: autoHide
+            auto_hide_secs: autoHide,
+            text_align:     textAlign
           }
         }
       }
@@ -1632,6 +1645,7 @@ function applyUrlParams() {
   if (p.get('label') !== null) document.getElementById('chk-label').checked = p.get('label') !== '0';
   if (p.get('album') !== null) document.getElementById('chk-album').checked = p.get('album') !== '0';
   if (p.get('hide')  !== null) document.getElementById('inp-autohide').value = p.get('hide') || '0';
+  if (p.get('align') !== null) document.getElementById('sel-textalign').value = p.get('align') || 'left';
 }
 
 /* ---- Generate shareable config URL (points to setup.html for customers) ---- */
@@ -1655,8 +1669,10 @@ function generateConfigUrl() {
   p.set('bars',  document.getElementById('chk-bars').checked  ? '1' : '0');
   p.set('label', document.getElementById('chk-label').checked ? '1' : '0');
   p.set('album', document.getElementById('chk-album').checked ? '1' : '0');
-  var autoHide = parseInt(document.getElementById('inp-autohide').value || '0', 10);
+  var autoHide  = parseInt(document.getElementById('inp-autohide').value || '0', 10);
   if (autoHide > 0) p.set('hide', String(autoHide));
+  var textAlign = document.getElementById('sel-textalign').value || 'left';
+  if (textAlign !== 'left') p.set('align', textAlign);
   var shareId = (document.getElementById('inp-share-id').value || '').trim();
   if (shareId) p.set('share', shareId);
   var url = base + '?' + p.toString();

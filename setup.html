@@ -810,6 +810,7 @@ function applyUrlParams() {
   _settings.showLabel = p.get('label') !== '0';
   _settings.showAlbum = p.get('album') !== '0';
   _settings.autoHide  = parseInt(p.get('hide') || '0', 10) || 0;
+  _settings.textAlign = p.get('align') || 'left';
   _settings.shareId   = p.get('share') || null;
 }
 
@@ -934,7 +935,9 @@ function buildFieldsArray() {
     { name: 'custom_width',   type: 'number',   label: 'Breite (px, 0 = Standard)',                           value: 0 },
     { name: 'custom_radius',  type: 'number',   label: 'Eckenradius (px, 0 = Standard)',                      value: 0 },
     { name: 'custom_blur',    type: 'number',   label: 'Blur (px, 0 = Standard)',                             value: 0 },
-    { name: 'auto_hide_secs', type: 'number',   label: 'Auto-Ausblenden nach (Sekunden, 0 = immer sichtbar)', value: _settings.autoHide || 0 }
+    { name: 'auto_hide_secs', type: 'number',   label: 'Auto-Ausblenden nach (Sekunden, 0 = immer sichtbar)', value: _settings.autoHide || 0 },
+    { name: 'text_align',     type: 'dropdown', label: 'Textausrichtung', value: _settings.textAlign || 'left',
+      options: { left: 'Linksbündig', center: 'Zentriert', right: 'Rechtsbündig' } }
   ];
 }
 
@@ -1013,7 +1016,8 @@ function connectAndInstall() {
     custom_width:   0,
     custom_radius:  0,
     custom_blur:    0,
-    auto_hide_secs: _settings.autoHide || 0
+    auto_hide_secs: _settings.autoHide  || 0,
+    text_align:     _settings.textAlign || 'left'
   };
 
   /* Convert fields array → SE's required object format (JSON string) */
