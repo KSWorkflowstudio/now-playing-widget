@@ -1320,7 +1320,6 @@ function buildStandaloneHTML() {
     + '      <div class="np-album" id="np-album"></div>\n'
     + '      <div class="np-progress-wrap">\n'
     + '        <div class="np-progress-bar"><div class="np-progress-fill" id="np-progress-fill"></div></div>\n'
-    + '        <span class="np-time" id="np-time"></span>\n'
     + '      </div>\n'
     + '    </div>\n'
     + '  </div>\n'
@@ -1396,6 +1395,10 @@ function _buildPreview() {
     + '--np-album-size:'  + (parseInt(fs)-5) + 'px;'
     + '}';
 
+  var textAlignVal = document.getElementById('sel-textalign').value || 'left';
+  var justifyVal   = textAlignVal === 'center' ? 'center' : textAlignVal === 'right' ? 'flex-end' : 'flex-start';
+  previewCSS += ':root { --np-text-align:' + textAlignVal + '; --np-status-justify:' + justifyVal + '; }';
+
   var themeClass = theme !== 'dark' ? ' np-theme-' + theme : '';
   var animClass  = (anim && anim !== 'ios') ? ' np-anim-' + anim : '';
 
@@ -1405,7 +1408,6 @@ function _buildPreview() {
     + 'var a=document.getElementById("np-artist");'
     + 'var al=document.getElementById("np-album");'
     + 'var fill=document.getElementById("np-progress-fill");'
-    + 'var tm=document.getElementById("np-time");'
     + 'var bars=document.getElementById("np-bars");'
     + 'var lbl=document.getElementById("np-now-label");'
     + 'var alEl=document.getElementById("np-album");'
@@ -1414,7 +1416,6 @@ function _buildPreview() {
     + 'if(a) a.textContent="Miley Cyrus";'
     + 'if(al) al.textContent="Endless Summer Vacation";'
     + 'if(fill) fill.style.width="42%";'
-    + 'if(tm) tm.textContent="1:23 / 3:20";'
     + 'if(bars) bars.style.display=' + (showBars ? '"flex"' : '"none"') + ';'
     + 'if(lbl) lbl.style.display=' + (showLbl ? '""' : '"none"') + ';'
     + 'if(alEl) alEl.style.display=' + (showAlb ? '""' : '"none"') + ';'
@@ -1448,7 +1449,6 @@ function _buildPreview() {
     + '<div class="np-album" id="np-album"></div>'
     + '<div class="np-progress-wrap">'
     + '<div class="np-progress-bar"><div class="np-progress-fill" id="np-progress-fill"></div></div>'
-    + '<span class="np-time" id="np-time"></span>'
     + '</div>'
     + '</div>'
     + '</div>'

@@ -287,6 +287,8 @@ body {
   gap: 6px;
 }
 
+.np-time { display: none; }
+
 .np-progress-bar {
   flex: 1;
   height: var(--np-progress-h);
