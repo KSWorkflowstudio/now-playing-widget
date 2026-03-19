@@ -334,8 +334,8 @@ code { background: #0f1117; padding: 1px 5px; border-radius: 3px; font-size: 0.8
     <div class="overlay-url-box" id="overlay-url-display" onclick="copyOverlayUrl()">—</div>
     <div class="copy-hint" id="overlay-url-copy-hint">Klicken zum Kopieren</div>
 
-    <button class="btn btn-primary" onclick="window.open('https://streamelements.com/dashboard/overlays','_blank')">
-      🎬 In StreamElements öffnen
+    <button class="btn btn-primary" id="btn-open-se" onclick="openInSE()">
+      🎬 Widget in StreamElements öffnen &amp; prüfen
     </button>
 
     <div class="notice" style="margin-top:14px">
@@ -497,6 +497,12 @@ function showError(msg) {
   setState('error');
 }
 
+/* ---- Open overlay directly in SE editor ---- */
+function openInSE() {
+  if (!_overlayResult) return;
+  window.open(_overlayResult.editUrl, '_blank');
+}
+
 /* ---- Copy overlay URL ---- */
 function copyOverlayUrl() {
   if (!_overlayResult) return;
@@ -583,8 +589,10 @@ function connectAndInstall() {
         return r.json().catch(function() { return overlay; });
       })
       .then(function() {
-        var overlayUrl = 'https://streamelements.com/overlay/' + channelId + '/' + overlayId;
-        _overlayResult = { overlayUrl: overlayUrl, channelId: channelId, overlayId: overlayId };
+        /* OBS Browser Source URL — SE uses just the overlayId */
+        var overlayUrl = 'https://streamelements.com/overlay/' + overlayId;
+        var editUrl    = 'https://streamelements.com/dashboard/overlays/' + overlayId;
+        _overlayResult = { overlayUrl: overlayUrl, editUrl: editUrl, channelId: channelId, overlayId: overlayId };
         document.getElementById('overlay-url-display').textContent = overlayUrl;
         setState('success');
       });
