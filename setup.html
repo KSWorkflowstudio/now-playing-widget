@@ -1061,15 +1061,17 @@ function connectAndInstall() {
     var channelId = channel ? (channel._id || channel.id || channel.username) : null;
     if (!channelId) { throw { type: 'no-channel', diag: _channelDiag }; }
 
-    /* Step 2: create overlay — SE API requires channelId in path */
+    var authHeaders = {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type':  'application/json',
+      'Accept':        'application/json'
+    };
+
+    /* Step 2: create empty overlay shell */
     return fetch('https://api.streamelements.com/kappa/v2/overlays/' + channelId, {
       method: 'POST',
-      headers: {
-        'Authorization':  'Bearer ' + token,
-        'Content-Type':   'application/json',
-        'Accept':         'application/json'
-      },
-      body: JSON.stringify(overlayBody)
+      headers: authHeaders,
+      body: JSON.stringify({ name: overlayBody.name, width: overlayBody.width, height: overlayBody.height })
     })
     .then(function(r) {
       if (r.status === 401 || r.status === 403) throw { type: 'auth' };
@@ -1077,21 +1079,26 @@ function connectAndInstall() {
       return r.json();
     })
     .then(function(overlay) {
-      var overlayId  = overlay._id || overlay.id;
-      var overlayUrl = channelId
-        ? 'https://streamelements.com/overlay/' + channelId + '/' + overlayId
-        : null;
-      _overlayResult = { overlayUrl: overlayUrl, channelId: channelId, overlayId: overlayId };
-      var urlEl = document.getElementById('overlay-url-display');
-      var hintEl = document.getElementById('overlay-url-hint');
-      if (overlayUrl) {
-        urlEl.textContent = overlayUrl;
-        hintEl.style.display = 'none';
-      } else {
-        urlEl.textContent = 'Overlay-ID: ' + overlayId;
-        hintEl.style.display = '';
-      }
-      setState('success');
+      var overlayId = overlay._id || overlay.id;
+
+      /* Step 3: PUT full overlay body with items into the newly created overlay */
+      return fetch('https://api.streamelements.com/kappa/v2/overlays/' + channelId + '/' + overlayId, {
+        method: 'PUT',
+        headers: authHeaders,
+        body: JSON.stringify(overlayBody)
+      })
+      .then(function(r) {
+        if (r.status === 401 || r.status === 403) throw { type: 'auth' };
+        if (!r.ok) return r.text().then(function(t) { throw { type: 'update', status: r.status, body: t }; });
+        return r.json().catch(function() { return overlay; }); /* some PUTs return empty body */
+      })
+      .then(function() {
+        var overlayUrl = 'https://streamelements.com/overlay/' + channelId + '/' + overlayId;
+        _overlayResult = { overlayUrl: overlayUrl, channelId: channelId, overlayId: overlayId };
+        document.getElementById('overlay-url-display').textContent = overlayUrl;
+        document.getElementById('overlay-url-hint').style.display = 'none';
+        setState('success');
+      });
     });
   })
   .catch(function(err) {
@@ -1100,9 +1107,9 @@ function connectAndInstall() {
       showError('Ungültiger Token. Bitte kopiere den JWT-Token aus dem StreamElements Dashboard: Account → Show Token (nicht die OBS-Browser-Source-URL!).' + diag);
     } else if (err && err.type === 'no-channel') {
       showError('Channel-ID konnte nicht ermittelt werden. Bitte versuche es erneut oder prüfe ob dein SE-Account mit Twitch/YouTube verbunden ist.' + diag);
-    } else if (err && err.type === 'create') {
+    } else if (err && (err.type === 'create' || err.type === 'update')) {
       var bodySnip = err.body ? err.body.slice(0, 200) : '—';
-      showError('SE API Status ' + err.status + ': ' + bodySnip + diag);
+      showError('SE API ' + err.type + ' Status ' + err.status + ': ' + bodySnip + diag);
     } else if (err && (err.message === 'Failed to fetch' || (err.message && err.message.indexOf('NetworkError') !== -1))) {
       showError('Keine Verbindung zur StreamElements API. Möglicherweise blockiert dein Browser oder eine Firewall die Verbindung.' + diag);
     } else {
