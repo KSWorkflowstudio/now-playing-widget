@@ -79,8 +79,8 @@
   },
   "max_messages": {
     "type": "number",
-    "label": "Max. sichtbare Nachrichten",
-    "value": 6
+    "label": "Max. sichtbare Nachrichten (0 = auto, füllt Widget-Höhe)",
+    "value": 0
   },
   "auto_hide_secs": {
     "type": "number",

@@ -29,6 +29,7 @@ var _msgCount     = 0;
 var _visible      = false;
 var _seenIds      = {};
 var _avatarCache  = {};  /* username → jtvnw.net URL (or '' if not found) */
+var _lastSender   = '';  /* for WhatsApp-style message grouping */
 
 /* ---- Deterministic color from username ---- */
 var COLORS = [
@@ -157,6 +158,45 @@ function detectRole(badges) {
   return 'viewer';
 }
 
+/* ---- Remove oldest message, promote next if it was a continuation ---- */
+function removeOldest(container) {
+  var msgs = container.querySelectorAll('.chat-msg');
+  if (!msgs.length) return;
+  var oldest = msgs[0];
+  var next   = msgs[1];
+
+  /* If next was a continuation from the same user, promote it to group-start */
+  if (next && next.classList.contains('chat-msg-cont') &&
+      next.dataset.sender === oldest.dataset.sender) {
+    next.classList.remove('chat-msg-cont');
+    var av = next.querySelector('.chat-avatar');
+    if (av) av.style.visibility = '';
+    var meta = next.querySelector('.chat-meta');
+    if (meta) meta.style.display = '';
+  }
+
+  oldest.classList.remove('chat-msg-in');
+  oldest.classList.add('chat-msg-out');
+  setTimeout(function() { if (oldest.parentNode) oldest.parentNode.removeChild(oldest); }, 380);
+}
+
+/* ---- Trim messages: count-based (max>0) or overflow-based (max=0) ---- */
+function trimToFit(container) {
+  var max = parseInt(fields.max_messages, 10) || 0;
+  if (max > 0) {
+    var msgs = container.querySelectorAll('.chat-msg');
+    for (var i = 0; i < msgs.length - max; i++) removeOldest(container);
+  } else {
+    /* Auto-fill: remove until content fits the container height */
+    var attempts = 0;
+    while (container.scrollHeight > container.clientHeight + 4 &&
+           container.querySelectorAll('.chat-msg').length > 1 &&
+           attempts++ < 40) {
+      removeOldest(container);
+    }
+  }
+}
+
 /* ---- Add message ---- */
 function addMessage(data) {
   var container = document.getElementById('chat-messages');
@@ -178,9 +218,14 @@ function addMessage(data) {
   var tagColor    = (data.tags && data.tags.color) || null;
   var initial     = displayName.charAt(0).toUpperCase();
   var avatarBg    = usernameColor(displayName);
+  var uname       = (data.username || data.name || displayName).toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+  /* WhatsApp-style grouping: detect consecutive messages from same user */
+  var isCont = (uname !== '' && uname === _lastSender);
+  _lastSender = uname;
 
   /* Name color priority:
-     1. username_fixed_color (admin sets one color for everyone)
+     1. username_fixed_color → feste Farbe für alle
      2. use_twitch_color ON  → Twitch tag color → hash fallback
      3. use_twitch_color OFF → role color → hash fallback           */
   var role = detectRole(badges);
@@ -195,65 +240,58 @@ function addMessage(data) {
     userColor = (rc && rc !== '') ? rc : usernameColor(displayName);
   }
 
-  /* Avatar — show colored initial immediately, then async-fetch the real
-     jtvnw.net profile picture via decapi.me (cached per username).
-     SE-provided avatar field is used directly when present. */
-  var uname = (data.username || data.name || displayName).toLowerCase().replace(/[^a-z0-9_]/g, '');
+  /* Avatar — always rendered; visibility:hidden for continuations so column stays aligned.
+     Real Twitch picture fetched async via decapi.me (cached). */
+  var seAvatar   = data.avatar || data.profileImage || data.profile_image_url || '';
   var avatarHtml = '';
   if (fields.show_avatar) {
-    var seAvatar = data.avatar || data.profileImage || data.profile_image_url || '';
-    /* Start in fallback state (shows initial letter); image injected once URL is ready */
+    var avStyle = isCont
+      ? 'visibility:hidden;pointer-events:none;background:transparent'
+      : 'background:' + avatarBg;
     avatarHtml =
-      '<div class="chat-avatar chat-avatar-wrap chat-avatar-fallback" data-uname="' + uname + '" style="background:' + avatarBg + '" title="' + esc(displayName) + '">' +
-        (seAvatar ? '<img class="chat-avatar-img" src="' + seAvatar + '" alt="" onerror="this.style.display=\'none\'">' : '') +
-        '<span class="chat-avatar-initial">' + initial + '</span>' +
+      '<div class="chat-avatar chat-avatar-wrap' + (isCont ? '' : ' chat-avatar-fallback') + '"' +
+        ' data-uname="' + uname + '"' +
+        ' style="' + avStyle + '"' +
+        ' title="' + esc(displayName) + '">' +
+        ((!isCont && seAvatar) ? '<img class="chat-avatar-img" src="' + seAvatar + '" alt="" onerror="this.style.display=\'none\'">' : '') +
+        (!isCont ? '<span class="chat-avatar-initial">' + initial + '</span>' : '') +
       '</div>';
   }
 
-  /* Timestamp */
-  var timeHtml = fields.show_timestamp
-    ? '<div class="chat-time">' + timestamp() + '</div>'
-    : '';
+  /* Meta row (name + badges) — hidden for continuations, visible for first in group */
+  var metaHtml = '<div class="chat-meta"' + (isCont ? ' style="display:none"' : '') + '>' +
+    renderBadges(badges) +
+    '<span class="chat-name" style="color:' + userColor + '">' + esc(displayName) + '</span>' +
+  '</div>';
 
-  /* Full message element */
+  /* Timestamp */
+  var timeHtml = fields.show_timestamp ? '<div class="chat-time">' + timestamp() + '</div>' : '';
+
+  /* Build message element */
   var msgEl = document.createElement('div');
-  msgEl.className = 'chat-msg chat-msg-in';
+  msgEl.className = 'chat-msg chat-msg-in' + (isCont ? ' chat-msg-cont' : '');
   msgEl.id = 'cm-' + (++_msgCount);
+  msgEl.dataset.sender = uname;
   msgEl.innerHTML =
     avatarHtml +
     '<div class="chat-bubble">' +
-      '<div class="chat-meta">' +
-        renderBadges(badges) +
-        '<span class="chat-name" style="color:' + userColor + '">' + esc(displayName) + '</span>' +
-      '</div>' +
+      metaHtml +
       '<div class="chat-text">' + text + '</div>' +
       timeHtml +
     '</div>';
 
   container.appendChild(msgEl);
 
-  /* Async-load real Twitch profile picture if SE didn't supply one */
-  if (fields.show_avatar && uname) {
+  /* Async-load real Twitch profile picture for first-in-group messages */
+  if (fields.show_avatar && !isCont && uname) {
     var wrapEl = msgEl.querySelector('.chat-avatar-wrap');
     if (wrapEl && !wrapEl.querySelector('.chat-avatar-img')) {
       loadTwitchAvatar(uname, wrapEl);
     }
   }
 
-  /* Enforce max message count — remove oldest first */
-  var max = Math.max(1, parseInt(fields.max_messages, 10) || 6);
-  var all = container.querySelectorAll('.chat-msg');
-  if (all.length > max) {
-    var toRemove = all.length - max;
-    for (var i = 0; i < toRemove; i++) {
-      var old = all[i];
-      old.classList.remove('chat-msg-in');
-      old.classList.add('chat-msg-out');
-      (function(el) {
-        setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 380);
-      })(old);
-    }
-  }
+  /* Trim after render — overflow-based when max_messages=0, count-based otherwise */
+  requestAnimationFrame(function() { trimToFit(container); });
 
   showWidget();
   resetHideTimer();
