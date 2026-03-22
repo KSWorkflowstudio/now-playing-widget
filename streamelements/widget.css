@@ -311,29 +311,39 @@ body {
    bounce:     15% Pause Start | 35% Hin     | 15% Pause Mitte | 35% Her  (loop nahtlos)
    Per-keyframe timing-function: linear = flache Pause, ease-in-out = sanfte Bewegung  */
 
+/* ── Rechts → Links ──────────────────────────────────────────────────
+   20% Pause Anfang | 50% Scroll | 16% Pause Ende |
+   3% Fade-out | reset (unsichtbar) | 4% Fade-in | 7% Pause Anfang
+   ────────────────────────────────────────────────────────────────── */
 @keyframes np-marquee-left {
-  0%    { transform: translateX(0);                          animation-timing-function: linear;       }
-  20%   { transform: translateX(0);                          animation-timing-function: ease-in-out;  }
-  70%   { transform: translateX(var(--np-scroll-dist, 0px)); animation-timing-function: linear;       }
-  88%   { transform: translateX(var(--np-scroll-dist, 0px)); animation-timing-function: linear;       }
-  88.5% { transform: translateX(0);                          animation-timing-function: linear;       }
-  100%  { transform: translateX(0); }
+  0%    { transform: translateX(0);                          opacity: 1; animation-timing-function: linear;      }
+  20%   { transform: translateX(0);                          opacity: 1; animation-timing-function: ease-in-out; }
+  70%   { transform: translateX(var(--np-scroll-dist, 0px)); opacity: 1; animation-timing-function: linear;      }
+  86%   { transform: translateX(var(--np-scroll-dist, 0px)); opacity: 1; animation-timing-function: linear;      }
+  89%   { transform: translateX(var(--np-scroll-dist, 0px)); opacity: 0; animation-timing-function: linear;      }
+  89.5% { transform: translateX(0);                          opacity: 0; animation-timing-function: linear;      }
+  93%   { transform: translateX(0);                          opacity: 1; animation-timing-function: linear;      }
+  100%  { transform: translateX(0);                          opacity: 1; }
 }
 
+/* ── Links → Rechts ─────────────────────────────────────────────── */
 @keyframes np-marquee-right {
-  0%    { transform: translateX(var(--np-scroll-dist, 0px)); animation-timing-function: linear;       }
-  20%   { transform: translateX(var(--np-scroll-dist, 0px)); animation-timing-function: ease-in-out;  }
-  70%   { transform: translateX(0);                          animation-timing-function: linear;       }
-  88%   { transform: translateX(0);                          animation-timing-function: linear;       }
-  88.5% { transform: translateX(var(--np-scroll-dist, 0px)); animation-timing-function: linear;       }
-  100%  { transform: translateX(var(--np-scroll-dist, 0px)); }
+  0%    { transform: translateX(var(--np-scroll-dist, 0px)); opacity: 1; animation-timing-function: linear;      }
+  20%   { transform: translateX(var(--np-scroll-dist, 0px)); opacity: 1; animation-timing-function: ease-in-out; }
+  70%   { transform: translateX(0);                          opacity: 1; animation-timing-function: linear;      }
+  86%   { transform: translateX(0);                          opacity: 1; animation-timing-function: linear;      }
+  89%   { transform: translateX(0);                          opacity: 0; animation-timing-function: linear;      }
+  89.5% { transform: translateX(var(--np-scroll-dist, 0px)); opacity: 0; animation-timing-function: linear;      }
+  93%   { transform: translateX(var(--np-scroll-dist, 0px)); opacity: 1; animation-timing-function: linear;      }
+  100%  { transform: translateX(var(--np-scroll-dist, 0px)); opacity: 1; }
 }
 
+/* ── Hin & Her — kein Sprung, kein Fade nötig ───────────────────── */
 @keyframes np-marquee-bounce {
-  0%   { transform: translateX(0);                          animation-timing-function: linear;       }
-  15%  { transform: translateX(0);                          animation-timing-function: ease-in-out;  }
-  50%  { transform: translateX(var(--np-scroll-dist, 0px)); animation-timing-function: linear;       }
-  65%  { transform: translateX(var(--np-scroll-dist, 0px)); animation-timing-function: ease-in-out;  }
+  0%   { transform: translateX(0);                          animation-timing-function: linear;      }
+  15%  { transform: translateX(0);                          animation-timing-function: ease-in-out; }
+  50%  { transform: translateX(var(--np-scroll-dist, 0px)); animation-timing-function: linear;      }
+  65%  { transform: translateX(var(--np-scroll-dist, 0px)); animation-timing-function: ease-in-out; }
   100% { transform: translateX(0); }
 }
 
