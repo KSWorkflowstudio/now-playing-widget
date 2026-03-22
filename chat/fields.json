@@ -25,50 +25,57 @@
       "xxxl":   "XXXL (30px)"
     }
   },
-  "font_family": {
-    "type": "dropdown",
-    "label": "Schriftart",
-    "value": "default",
-    "options": {
-      "default":    "Standard (Inter/Segoe UI)",
-      "roboto":     "Roboto",
-      "oswald":     "Oswald",
-      "montserrat": "Montserrat",
-      "lato":       "Lato",
-      "nunito":     "Nunito (rund)",
-      "pressstart": "Press Start 2P (Retro)",
-      "bangers":    "Bangers (Comic)"
-    }
-  },
   "font_color": {
     "type": "colorpicker",
     "label": "Schriftfarbe (Nachrichtentext)",
     "value": "rgba(255,255,255,0.90)"
   },
+  "use_twitch_color": {
+    "type": "checkbox",
+    "label": "Twitch-Nutzerfarbe für Username verwenden",
+    "value": true
+  },
+  "username_fixed_color": {
+    "type": "colorpicker",
+    "label": "Feste Namensfarbe für alle User (überschreibt Twitch-Farbe)",
+    "value": ""
+  },
   "color_broadcaster": {
     "type": "colorpicker",
-    "label": "Namensfarbe — Streamer/Broadcaster",
+    "label": "Namensfarbe — Streamer/Broadcaster (wenn Twitch-Farbe aus)",
     "value": "#fbbf24"
   },
   "color_moderator": {
     "type": "colorpicker",
-    "label": "Namensfarbe — Moderator",
+    "label": "Namensfarbe — Moderator (wenn Twitch-Farbe aus)",
     "value": "#22c55e"
   },
   "color_vip": {
     "type": "colorpicker",
-    "label": "Namensfarbe — VIP",
+    "label": "Namensfarbe — VIP (wenn Twitch-Farbe aus)",
     "value": "#f472b6"
   },
   "color_subscriber": {
     "type": "colorpicker",
-    "label": "Namensfarbe — Subscriber",
+    "label": "Namensfarbe — Subscriber (wenn Twitch-Farbe aus)",
     "value": "#a78bfa"
   },
   "color_viewer": {
     "type": "colorpicker",
-    "label": "Namensfarbe — Normaler Zuschauer (leer = Twitch-Farbe)",
+    "label": "Namensfarbe — Normaler Zuschauer (wenn Twitch-Farbe aus, leer = Zufallsfarbe)",
     "value": ""
+  },
+  "avatar_size": {
+    "type": "dropdown",
+    "label": "Profilbild-Größe",
+    "value": "medium",
+    "options": {
+      "xs":     "XS (24px)",
+      "small":  "Klein (30px)",
+      "medium": "Mittel (38px)",
+      "large":  "Groß (48px)",
+      "xl":     "XL (60px)"
+    }
   },
   "max_messages": {
     "type": "number",
@@ -88,11 +95,6 @@
   "show_badges": {
     "type": "checkbox",
     "label": "Abzeichen (Badges) anzeigen",
-    "value": true
-  },
-  "show_role": {
-    "type": "checkbox",
-    "label": "Benutzerrolle anzeigen (Mod, VIP, Sub, Streamer)",
     "value": true
   },
   "show_timestamp": {

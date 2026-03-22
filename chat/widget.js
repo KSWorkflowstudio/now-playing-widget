@@ -4,23 +4,24 @@
    ============================================================ */
 
 var fields = {
-  max_messages:       6,
-  show_avatar:        true,
-  show_badges:        true,
-  show_role:          true,
-  show_timestamp:     false,
-  show_header:        true,
-  font_size:          'medium',
-  font_color:         'rgba(255,255,255,0.90)',
-  font_family:        'default',
-  theme:              'dark',
-  auto_hide_secs:     0,
-  transparent_bg:     true,
-  color_broadcaster:  '#fbbf24',
-  color_moderator:    '#22c55e',
-  color_vip:          '#f472b6',
-  color_subscriber:   '#a78bfa',
-  color_viewer:       ''
+  max_messages:         6,
+  show_avatar:          true,
+  show_badges:          true,
+  show_timestamp:       false,
+  show_header:          true,
+  font_size:            'medium',
+  font_color:           'rgba(255,255,255,0.90)',
+  theme:                'dark',
+  auto_hide_secs:       0,
+  transparent_bg:       true,
+  avatar_size:          'medium',
+  use_twitch_color:     true,
+  username_fixed_color: '',
+  color_broadcaster:    '#fbbf24',
+  color_moderator:      '#22c55e',
+  color_vip:            '#f472b6',
+  color_subscriber:     '#a78bfa',
+  color_viewer:         ''
 };
 
 var _hideTimer    = null;
@@ -178,12 +179,21 @@ function addMessage(data) {
   var initial     = displayName.charAt(0).toUpperCase();
   var avatarBg    = usernameColor(displayName);
 
-  /* Name color: role color > Twitch tag color > username hash */
-  var role      = detectRole(badges);
-  var roleColor = fields['color_' + role];
-  var userColor = (roleColor && roleColor !== '')
-    ? roleColor
-    : (tagColor && tagColor !== '#000000' && tagColor !== '') ? tagColor : usernameColor(displayName);
+  /* Name color priority:
+     1. username_fixed_color (admin sets one color for everyone)
+     2. use_twitch_color ON  → Twitch tag color → hash fallback
+     3. use_twitch_color OFF → role color → hash fallback           */
+  var role = detectRole(badges);
+  var userColor;
+  if (fields.username_fixed_color) {
+    userColor = fields.username_fixed_color;
+  } else if (fields.use_twitch_color) {
+    var tc = tagColor && tagColor !== '#000000' ? tagColor : '';
+    userColor = tc || usernameColor(displayName);
+  } else {
+    var rc = fields['color_' + role];
+    userColor = (rc && rc !== '') ? rc : usernameColor(displayName);
+  }
 
   /* Avatar — show colored initial immediately, then async-fetch the real
      jtvnw.net profile picture via decapi.me (cached per username).
@@ -250,50 +260,26 @@ function addMessage(data) {
 }
 
 /* ---- Apply theme + appearance ---- */
-var _fontLinkEl = null;
-var GOOGLE_FONTS = {
-  roboto:       'Roboto',
-  oswald:       'Oswald',
-  montserrat:   'Montserrat',
-  lato:         'Lato',
-  nunito:       'Nunito',
-  pressstart:   'Press+Start+2P',
-  bangers:      'Bangers'
-};
-var FONT_STACKS = {
-  default:    "'Inter', 'Segoe UI', sans-serif",
-  roboto:     "'Roboto', sans-serif",
-  oswald:     "'Oswald', sans-serif",
-  montserrat: "'Montserrat', sans-serif",
-  lato:       "'Lato', sans-serif",
-  nunito:     "'Nunito', sans-serif",
-  pressstart: "'Press Start 2P', cursive",
-  bangers:    "'Bangers', cursive"
-};
-
 function applyAppearance() {
-  var root    = document.documentElement;
-  var widget  = document.getElementById('chat-widget');
+  var root   = document.documentElement;
+  var widget = document.getElementById('chat-widget');
   if (!widget) return;
 
-  /* Font size + color */
+  /* Font size */
   var fsMap = { small: '12px', medium: '14px', large: '16px', xl: '20px', xxl: '24px', xxxl: '30px' };
-  root.style.setProperty('--chat-font-size',  fsMap[fields.font_size] || '14px');
+  root.style.setProperty('--chat-font-size', fsMap[fields.font_size] || '14px');
+
+  /* Font — fixed to Inter/Segoe UI, same as Now Playing widget */
+  root.style.setProperty('--chat-font', "'Inter', 'Segoe UI', sans-serif");
+
+  /* Message text color */
   if (fields.font_color) {
     root.style.setProperty('--chat-text-color', fields.font_color);
   }
 
-  /* Font family — load Google Font if needed */
-  var ff = fields.font_family || 'default';
-  if (ff !== 'default' && GOOGLE_FONTS[ff]) {
-    if (!_fontLinkEl) {
-      _fontLinkEl = document.createElement('link');
-      _fontLinkEl.rel = 'stylesheet';
-      document.head.appendChild(_fontLinkEl);
-    }
-    _fontLinkEl.href = 'https://fonts.googleapis.com/css2?family=' + GOOGLE_FONTS[ff] + '&display=swap';
-  }
-  root.style.setProperty('--chat-font', FONT_STACKS[ff] || FONT_STACKS.default);
+  /* Avatar size */
+  var avMap = { xs: '24px', small: '30px', medium: '38px', large: '48px', xl: '60px' };
+  root.style.setProperty('--chat-avatar-size', avMap[fields.avatar_size] || '38px');
 
   /* Theme class */
   widget.classList.remove('theme-frosted','theme-light','theme-minimal','theme-neon','theme-liquid','theme-dark');
