@@ -279,10 +279,11 @@ function applyAppearance() {
     root.style.setProperty('--chat-text-color', fields.font_color);
   }
 
-  /* Avatar size — explicit setting overrides; falls back to proportional (≈2.5× font size) */
-  var avMap = { xs: '24px', small: '30px', medium: '38px', large: '48px', xl: '60px' };
-  var autoAvatar = Math.round(fs * 2.5) + 'px';
-  root.style.setProperty('--chat-avatar-size', avMap[fields.avatar_size] || autoAvatar);
+  /* Avatar size — scales with font_size; avatar_size setting acts as multiplier
+     so both controls work together: bigger font = bigger avatar at every size level */
+  var avMult = { xs: 0.65, small: 0.82, medium: 1.0, large: 1.28, xl: 1.65 };
+  var mult   = avMult[fields.avatar_size] || 1.0;
+  root.style.setProperty('--chat-avatar-size', Math.round(fs * 2.5 * mult) + 'px');
 
   /* Theme class */
   widget.classList.remove('theme-frosted','theme-light','theme-minimal','theme-neon','theme-liquid','theme-dark');

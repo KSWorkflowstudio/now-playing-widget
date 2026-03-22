@@ -149,7 +149,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: calc(var(--chat-avatar-size) * 0.42);
   font-weight: 700;
   color: #fff;
   flex-shrink: 0;
