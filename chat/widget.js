@@ -4,7 +4,7 @@
    ============================================================ */
 
 var fields = {
-  max_messages:         6,
+  max_messages:         0,
   show_avatar:          true,
   show_badges:          true,
   show_timestamp:       false,
@@ -12,6 +12,13 @@ var fields = {
   font_size:            'medium',
   font_color:           'rgba(255,255,255,0.90)',
   theme:                'dark',
+  shape:                'default',
+  animation:            'ios',
+  custom_width:         0,
+  custom_radius:        0,
+  custom_blur:          0,
+  scale:                1,
+  text_align:           'left',
   auto_hide_secs:       0,
   transparent_bg:       true,
   avatar_size:          'medium',
@@ -88,25 +95,27 @@ function esc(str) {
 /* ---- Show widget ---- */
 function showWidget() {
   var w = document.getElementById('chat-widget');
-  if (!w) return;
-  w.classList.remove('chat-hidden', 'chat-out');
-  w.classList.add('chat-visible');
+  if (!w || _visible) return;
   _visible = true;
+  w.classList.remove('chat-hidden', 'chat-anim-out');
+  w.classList.add('chat-visible', 'chat-anim-in');
+  setTimeout(function() { w.classList.remove('chat-anim-in'); }, 450);
 }
 
 /* ---- Hide widget ---- */
 function hideWidget() {
   var w = document.getElementById('chat-widget');
   if (!w) return;
-  w.classList.remove('chat-visible');
-  w.classList.add('chat-out');
+  _visible = false;
+  w.classList.remove('chat-visible', 'chat-anim-in');
+  w.classList.add('chat-anim-out');
   setTimeout(function() {
+    w.classList.remove('chat-anim-out');
     w.classList.add('chat-hidden');
-    w.classList.remove('chat-out');
     var c = document.getElementById('chat-messages');
     if (c) c.innerHTML = '';
-    _visible = false;
-  }, 500);
+    _lastSender = '';
+  }, 350);
 }
 
 /* ---- Auto-hide timer ---- */
@@ -297,48 +306,74 @@ function addMessage(data) {
   resetHideTimer();
 }
 
+/* ---- Helper: set CSS px var or remove if value ≤ 0 ---- */
+function chatSetOrReset(prop, val) {
+  var n = parseFloat(val);
+  if (n > 0) document.documentElement.style.setProperty(prop, n + 'px');
+  else        document.documentElement.style.removeProperty(prop);
+}
+
 /* ---- Apply theme + appearance ---- */
 function applyAppearance() {
   var root   = document.documentElement;
   var widget = document.getElementById('chat-widget');
   if (!widget) return;
 
-  /* Font size — scales message text, name, AND avatar proportionally */
+  /* Font size — drives name size AND avatar size proportionally */
   var fsPx = { small: 12, medium: 14, large: 16, xl: 20, xxl: 24, xxxl: 30 };
   var fs   = fsPx[fields.font_size] || 14;
   root.style.setProperty('--chat-font-size', fs + 'px');
-  root.style.setProperty('--chat-name-size', (fs + 1) + 'px');  /* name slightly larger than body */
+  root.style.setProperty('--chat-name-size', (fs + 1) + 'px');
 
   /* Font — fixed to Inter/Segoe UI, same as Now Playing widget */
   root.style.setProperty('--chat-font', "'Inter', 'Segoe UI', sans-serif");
 
   /* Message text color */
-  if (fields.font_color) {
-    root.style.setProperty('--chat-text-color', fields.font_color);
-  }
+  if (fields.font_color) root.style.setProperty('--chat-text-color', fields.font_color);
 
-  /* Avatar size — scales with font_size; avatar_size setting acts as multiplier
-     so both controls work together: bigger font = bigger avatar at every size level */
+  /* Text alignment */
+  root.style.setProperty('--chat-text-align', fields.text_align || 'left');
+
+  /* Avatar size — scales with font_size; avatar_size is a multiplier */
   var avMult = { xs: 0.65, small: 0.82, medium: 1.0, large: 1.28, xl: 1.65 };
   var mult   = avMult[fields.avatar_size] || 1.0;
   root.style.setProperty('--chat-avatar-size', Math.round(fs * 2.5 * mult) + 'px');
 
   /* Theme class */
   widget.classList.remove('theme-frosted','theme-light','theme-minimal','theme-neon','theme-liquid','theme-dark');
-  if (fields.theme && fields.theme !== 'dark') {
-    widget.classList.add('theme-' + fields.theme);
+  if (fields.theme && fields.theme !== 'dark') widget.classList.add('theme-' + fields.theme);
+
+  /* Animation class — controls show/hide animation style */
+  widget.classList.remove('chat-anim-ios','chat-anim-fade','chat-anim-slide-left',
+                           'chat-anim-slide-right','chat-anim-scale','chat-anim-slide-bottom');
+  widget.classList.add('chat-anim-' + (fields.animation || 'ios'));
+
+  /* Shape / corner radius — custom_radius wins, otherwise shape preset */
+  var customR = parseFloat(fields.custom_radius);
+  if (customR > 0) {
+    root.style.setProperty('--chat-radius', customR + 'px');
+  } else {
+    var shapeMap = { pill: '60px', sharp: '6px', square: '0px' };
+    var sr = shapeMap[fields.shape];
+    if (sr) root.style.setProperty('--chat-radius', sr);
+    else    root.style.removeProperty('--chat-radius');
   }
+
+  /* Custom width + blur overrides */
+  chatSetOrReset('--chat-width', fields.custom_width);
+  chatSetOrReset('--chat-blur',  fields.custom_blur);
+
+  /* HiDPI / 4K render scale */
+  var sc = parseFloat(fields.scale) || 1;
+  document.body.style.zoom = sc > 1 ? String(sc) : '';
 
   /* Header bar visibility */
   var bar = document.querySelector('.chat-header-bar');
   if (bar) bar.style.display = fields.show_header ? '' : 'none';
 
   /* Transparent background */
-  if (fields.transparent_bg) {
-    widget.classList.add('chat-bg-transparent');
-  } else {
-    widget.classList.remove('chat-bg-transparent');
-  }
+  if (fields.transparent_bg) widget.classList.add('chat-bg-transparent');
+  else                        widget.classList.remove('chat-bg-transparent');
 }
 
 /* ============================================================

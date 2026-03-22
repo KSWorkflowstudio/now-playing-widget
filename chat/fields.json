@@ -12,6 +12,65 @@
       "liquid":  "Liquid Glass \u2728"
     }
   },
+  "shape": {
+    "type": "dropdown",
+    "label": "Form / Ecken",
+    "value": "default",
+    "options": {
+      "default": "Standard (abgerundet)",
+      "pill":    "Pill (stark abgerundet)",
+      "sharp":   "Sharp (leicht abgerundet)",
+      "square":  "Square (eckig)"
+    }
+  },
+  "animation": {
+    "type": "dropdown",
+    "label": "Einblen-Animation",
+    "value": "ios",
+    "options": {
+      "ios":          "iOS (Standard)",
+      "fade":         "Fade",
+      "slide-left":   "Slide von links",
+      "slide-right":  "Slide von rechts",
+      "scale":        "Scale",
+      "slide-bottom": "Slide von unten"
+    }
+  },
+  "scale": {
+    "type": "dropdown",
+    "label": "Renderqualität (4K-Schärfe)",
+    "value": "1",
+    "options": {
+      "1": "1× Standard",
+      "2": "2× Scharf (1080p/1440p)",
+      "4": "4× Ultra (4K)"
+    }
+  },
+  "text_align": {
+    "type": "dropdown",
+    "label": "Textausrichtung",
+    "value": "left",
+    "options": {
+      "left":   "Links",
+      "center": "Mitte",
+      "right":  "Rechts"
+    }
+  },
+  "custom_width": {
+    "type": "number",
+    "label": "Benutzerdefinierte Breite in px (0 = Standard 400px)",
+    "value": 0
+  },
+  "custom_radius": {
+    "type": "number",
+    "label": "Benutzerdefinierter Eckenradius in px (0 = Form-Preset)",
+    "value": 0
+  },
+  "custom_blur": {
+    "type": "number",
+    "label": "Benutzerdefinierter Blur-Wert in px (0 = Theme-Standard)",
+    "value": 0
+  },
   "font_size": {
     "type": "dropdown",
     "label": "Schriftgröße",
