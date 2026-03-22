@@ -166,7 +166,7 @@ function applyAppearance() {
 }
 
 /* ---------- Text scroll helpers ---------- */
-var _scrollSpeedMap = { slow: 16, normal: 10, fast: 6 };
+var _scrollSpeedMap = { slow: 22, normal: 14, fast: 8 };
 
 function applyScrollEl(el) {
   if (!el) return;
