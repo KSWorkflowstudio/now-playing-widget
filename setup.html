@@ -271,7 +271,7 @@ details.alt-details[open] summary::before { content: '▾ '; }
       </div>
       <div class="mini-step">
         <div class="mini-step-n">3</div>
-        <div>Overlay starten → URL in <strong>OBS Browser Source</strong> einfügen (Breite: 400, Höhe: 120)</div>
+        <div>Overlay starten → URL in <strong>OBS Browser Source</strong> einfügen &middot; Standard: 400×120 &middot; 4K: 1600×480 + Renderqualität 4× im Fields-Tab</div>
       </div>
     </div>
 
@@ -299,7 +299,7 @@ details.alt-details[open] summary::before { content: '▾ '; }
       </div>
       <div class="mini-step">
         <div class="mini-step-n">3</div>
-        <div>Overlay starten → URL kopieren → <strong>OBS Browser Source</strong> (Breite: 400, Höhe: 120)</div>
+        <div>Overlay starten → URL kopieren → <strong>OBS Browser Source</strong> &middot; Standard: 400×120 &middot; 4K: 1600×480 + Renderqualität 4× im Fields-Tab</div>
       </div>
     </div>
 
@@ -319,7 +319,7 @@ details.alt-details[open] summary::before { content: '▾ '; }
       🎬 StreamElements öffnen
     </button>
     <div class="notice" style="margin-top:14px">
-      <strong>OBS Browser Source:</strong> Breite <code>400</code> &middot; Höhe <code>120</code> &middot; Eigenes CSS: <code style="color:#f0abfc">body{background:rgba(0,0,0,0)}</code>
+      <strong>OBS Browser Source:</strong> Standard: Breite <code>400</code> Höhe <code>120</code> &middot; 4K-scharf: <code>1600×480</code> + Renderqualität auf 4× stellen &middot; CSS: <code style="color:#f0abfc">body{background:rgba(0,0,0,0)}</code>
     </div>
   </div>
 
@@ -350,7 +350,7 @@ details.alt-details[open] summary::before { content: '▾ '; }
     </button>
 
     <div class="notice" style="margin-top:14px">
-      <strong>OBS Browser Source:</strong> Breite <code>400</code> &middot; Höhe <code>120</code> &middot; Eigenes CSS: <code style="color:#f0abfc">body{background:rgba(0,0,0,0)}</code><br>
+      <strong>OBS Browser Source:</strong> Standard: Breite <code>400</code> Höhe <code>120</code> &middot; 4K-scharf: <code>1600×480</code> + Renderqualität auf 4× stellen &middot; CSS: <code style="color:#f0abfc">body{background:rgba(0,0,0,0)}</code><br>
       <span style="color:#6366f1;opacity:0.8">„Quelle ausblenden wenn nicht sichtbar" → AUS lassen</span>
     </div>
 
@@ -930,7 +930,9 @@ function buildFieldsArray() {
     { name: 'custom_blur',    type: 'number',   label: 'Blur (px, 0 = Standard)',                             value: 0 },
     { name: 'auto_hide_secs', type: 'number',   label: 'Auto-Ausblenden nach (Sekunden, 0 = immer sichtbar)', value: _settings.autoHide || 0 },
     { name: 'text_align',     type: 'dropdown', label: 'Textausrichtung', value: _settings.textAlign || 'left',
-      options: { left: 'Linksbündig', center: 'Zentriert', right: 'Rechtsbündig' } }
+      options: { left: 'Linksbündig', center: 'Zentriert', right: 'Rechtsbündig' } },
+    { name: 'scale',          type: 'dropdown', label: 'Renderqualität (OBS Browser Source anpassen!)', value: '1',
+      options: { '1': '1× Standard (400×120 px)', '2': '2× Scharf – 1080p/1440p (800×240 px)', '4': '4× Ultra – 4K (1600×480 px)' } }
   ];
 }
 
@@ -1010,7 +1012,8 @@ function connectAndInstall() {
     custom_radius:  0,
     custom_blur:    0,
     auto_hide_secs: _settings.autoHide  || 0,
-    text_align:     _settings.textAlign || 'left'
+    text_align:     _settings.textAlign || 'left',
+    scale:          1
   };
 
   /* Convert fields array → SE's required object format (JSON string) */

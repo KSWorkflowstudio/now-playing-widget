@@ -20,7 +20,8 @@ var fields = {
   custom_radius:  0,
   custom_blur:    0,
   auto_hide_secs: 0,  /* 0 = always visible; >0 = hide after N seconds */
-  text_align:     'left'
+  text_align:     'left',
+  scale:          1   /* render scale: 1=standard, 2=sharp 1080p, 4=4K */
 };
 
 /* Read config from URL params — standalone OBS direct mode */
@@ -38,6 +39,7 @@ var fields = {
     var bars  = p.get('bars');  if (bars  !== null) fields.show_bars      = bars  !== '0';
     var label = p.get('label'); if (label !== null) fields.show_label     = label !== '0';
     var album = p.get('album'); if (album !== null) fields.show_album     = album !== '0';
+    var scale = p.get('scale'); if (scale !== null) fields.scale          = parseFloat(scale) || 1;
   } catch (e) {}
 })();
 
@@ -142,6 +144,10 @@ function applyAppearance() {
   var justifyMap = { left: 'flex-start', center: 'center', right: 'flex-end' };
   root.style.setProperty('--np-text-align',     align);
   root.style.setProperty('--np-status-justify', justifyMap[align] || 'flex-start');
+
+  // HiDPI / 4K render scale — zoom doubles/quadruples pixel density
+  var sc = parseFloat(fields.scale) || 1;
+  document.body.style.zoom = sc > 1 ? sc : '';
 }
 
 /* ---------- iPhone-style animation helpers ---------- */
