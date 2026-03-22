@@ -181,8 +181,22 @@ function removeMessage(msgEl, container) {
   msgEl.classList.add('chat-msg-out');
   setTimeout(function() {
     if (msgEl.parentNode) msgEl.parentNode.removeChild(msgEl);
-    /* Hide widget when last message is gone */
-    if (!container.querySelector('.chat-msg')) hideWidget();
+    /* Hide widget only when the very last message has been removed.
+       Note: chat-msg-out elements still carry the .chat-msg class while
+       animating, so length === 0 means the container is truly empty. */
+    if (container.querySelectorAll('.chat-msg').length === 0) {
+      var w = document.getElementById('chat-widget');
+      if (!w) return;
+      _visible = false;
+      w.classList.remove('chat-visible', 'chat-anim-in');
+      w.classList.add('chat-anim-out');
+      setTimeout(function() {
+        w.classList.remove('chat-anim-out');
+        w.classList.add('chat-hidden');
+        _lastSender  = '';
+        _currentSide = 'left';
+      }, 350);
+    }
   }, 380);
 }
 
