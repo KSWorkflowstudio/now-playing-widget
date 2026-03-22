@@ -114,5 +114,28 @@
       "center": "Zentriert",
       "right":  "Rechtsbündig"
     }
+  },
+  {
+    "name": "text_scroll",
+    "type": "dropdown",
+    "label": "Laufschrift bei langem Text",
+    "value": "left",
+    "options": {
+      "left":   "Rechts → Links ✦ (Standard)",
+      "right":  "Links → Rechts",
+      "bounce": "Hin & her",
+      "none":   "Aus (Text abschneiden)"
+    }
+  },
+  {
+    "name": "scroll_speed",
+    "type": "dropdown",
+    "label": "Laufschrift-Geschwindigkeit",
+    "value": "normal",
+    "options": {
+      "slow":   "Langsam",
+      "normal": "Normal ✦ (Standard)",
+      "fast":   "Schnell"
+    }
   }
 ]

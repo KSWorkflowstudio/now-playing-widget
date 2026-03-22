@@ -21,6 +21,8 @@ var fields = {
   custom_blur:    0,
   auto_hide_secs: 0,  /* 0 = always visible; >0 = hide after N seconds */
   text_align:     'left',
+  text_scroll:    'left',   /* left | right | bounce | none */
+  scroll_speed:   'normal', /* slow | normal | fast */
   scale:          1   /* render scale: 1=standard, 2=sharp 1080p, 4=4K */
 };
 
@@ -39,7 +41,9 @@ var fields = {
     var bars  = p.get('bars');  if (bars  !== null) fields.show_bars      = bars  !== '0';
     var label = p.get('label'); if (label !== null) fields.show_label     = label !== '0';
     var album = p.get('album'); if (album !== null) fields.show_album     = album !== '0';
-    var scale = p.get('scale'); if (scale !== null) fields.scale          = parseFloat(scale) || 1;
+    var scale  = p.get('scale');  if (scale  !== null) fields.scale        = parseFloat(scale) || 1;
+    var scroll = p.get('scroll'); if (scroll !== null) fields.text_scroll  = scroll;
+    var spd    = p.get('spd');    if (spd    !== null) fields.scroll_speed = spd;
   } catch (e) {}
 })();
 
@@ -148,6 +152,59 @@ function applyAppearance() {
   // HiDPI / 4K render scale — zoom doubles/quadruples pixel density
   var sc = parseFloat(fields.scale) || 1;
   document.body.style.zoom = sc > 1 ? sc : '';
+
+  // Scroll mode class on card
+  cardEl.classList.remove('np-scroll-left', 'np-scroll-right', 'np-scroll-bounce');
+  var sm = fields.text_scroll || 'left';
+  if (sm !== 'none') cardEl.classList.add('np-scroll-' + sm);
+
+  // Re-evaluate scroll on both text elements after layout settles
+  setTimeout(function () {
+    applyScrollEl(trackEl);
+    applyScrollEl(artistEl);
+  }, 80);
+}
+
+/* ---------- Text scroll helpers ---------- */
+var _scrollSpeedMap = { slow: 16, normal: 10, fast: 6 };
+
+function applyScrollEl(el) {
+  if (!el) return;
+  var inner = el.querySelector('.np-scroll-inner');
+  if (!inner) return;
+
+  var mode = fields.text_scroll || 'left';
+  el.classList.remove('np-scrolling');
+  el.style.removeProperty('--np-scroll-dist');
+  el.style.removeProperty('--np-scroll-speed');
+
+  if (mode === 'none') return;
+
+  // Measure overflow — only animate when text is actually clipped
+  var overflow = inner.scrollWidth - el.clientWidth;
+  if (overflow > 2) {
+    var dist = (mode === 'right') ? overflow : -overflow;
+    var baseSec = _scrollSpeedMap[fields.scroll_speed] || 10;
+    // Scale speed with text length so long text gets more time
+    var secs = Math.max(baseSec * 0.6, Math.min(baseSec * 2, baseSec + overflow * 0.04));
+    el.style.setProperty('--np-scroll-dist',  dist + 'px');
+    el.style.setProperty('--np-scroll-speed', secs.toFixed(1) + 's');
+    el.classList.add('np-scrolling');
+  }
+}
+
+function setScrollText(el, text) {
+  if (!el) return;
+  var inner = el.querySelector('.np-scroll-inner');
+  if (!inner) {
+    inner = document.createElement('span');
+    inner.className = 'np-scroll-inner';
+    el.innerHTML = '';
+    el.appendChild(inner);
+  }
+  inner.textContent = text;
+  // Delay so browser calculates scrollWidth after paint
+  setTimeout(function () { applyScrollEl(el); }, 80);
 }
 
 /* ---------- iPhone-style animation helpers ---------- */
@@ -270,10 +327,10 @@ function showTrack(data) {
   var trackId    = (data.artist || '') + '|' + (data.title || '');
   var isNewTrack = (trackId !== lastTrackId);
 
-  // Update text content
-  if (trackEl)  trackEl.textContent  = data.title  || '';
-  if (artistEl) artistEl.textContent = data.artist || '';
-  if (albumEl)  albumEl.textContent  = data.album  || '';
+  // Update text content (setScrollText also re-evaluates marquee)
+  setScrollText(trackEl,  data.title  || '');
+  setScrollText(artistEl, data.artist || '');
+  if (albumEl) albumEl.textContent = data.album || '';
 
   // Playing state
   isPlaying = !!data.isPlaying;
@@ -328,8 +385,8 @@ function pollLastFm() {
     .then(function (data) {
       if (data.error) {
         // Show error in widget so user knows what's wrong
-        if (trackEl)  trackEl.textContent  = 'Last.fm Error ' + data.error;
-        if (artistEl) artistEl.textContent = data.message || '';
+        setScrollText(trackEl,  'Last.fm Error ' + data.error);
+        setScrollText(artistEl, data.message || '');
         if (albumEl)  albumEl.textContent  = '';
         showCard();
         return;

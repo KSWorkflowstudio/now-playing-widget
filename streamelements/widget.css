@@ -257,18 +257,14 @@ body {
   font-size: var(--np-track-size);
   font-weight: 600;
   color: var(--np-track-color);
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
   text-align: var(--np-text-align);
 }
 
 .np-artist {
   font-size: var(--np-artist-size);
   color: var(--np-artist-color);
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
   text-align: var(--np-text-align);
 }
 
@@ -279,6 +275,60 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: var(--np-text-align);
+}
+
+/* ---------- Laufschrift / Marquee ---------- */
+.np-scroll-inner {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* No overflow → static */
+.np-track .np-scroll-inner,
+.np-artist .np-scroll-inner {
+  text-overflow: ellipsis;
+}
+
+/* Active scroll → animate */
+.np-track.np-scrolling .np-scroll-inner,
+.np-artist.np-scrolling .np-scroll-inner {
+  animation: np-marquee-left var(--np-scroll-speed, 10s) ease-in-out infinite;
+}
+
+/* Mode overrides */
+.np-scroll-right .np-track.np-scrolling .np-scroll-inner,
+.np-scroll-right .np-artist.np-scrolling .np-scroll-inner {
+  animation-name: np-marquee-right;
+}
+.np-scroll-bounce .np-track.np-scrolling .np-scroll-inner,
+.np-scroll-bounce .np-artist.np-scrolling .np-scroll-inner {
+  animation-name: np-marquee-bounce;
+}
+
+/* Keyframes */
+@keyframes np-marquee-left {
+  0%   { transform: translateX(0); }
+  12%  { transform: translateX(0); }                         /* Pause am Start */
+  78%  { transform: translateX(var(--np-scroll-dist, 0px)); }/* Einrollen */
+  90%  { transform: translateX(var(--np-scroll-dist, 0px)); }/* Pause am Ende */
+  91%  { transform: translateX(0); }                         /* Reset */
+  100% { transform: translateX(0); }
+}
+
+@keyframes np-marquee-right {
+  0%   { transform: translateX(var(--np-scroll-dist, 0px)); }
+  12%  { transform: translateX(var(--np-scroll-dist, 0px)); }
+  78%  { transform: translateX(0); }
+  90%  { transform: translateX(0); }
+  91%  { transform: translateX(var(--np-scroll-dist, 0px)); }
+  100% { transform: translateX(var(--np-scroll-dist, 0px)); }
+}
+
+@keyframes np-marquee-bounce {
+  0%   { transform: translateX(0); }
+  45%  { transform: translateX(var(--np-scroll-dist, 0px)); }
+  55%  { transform: translateX(var(--np-scroll-dist, 0px)); }
+  100% { transform: translateX(0); }
 }
 
 
