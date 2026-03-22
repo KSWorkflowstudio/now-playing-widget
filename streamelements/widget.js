@@ -249,6 +249,9 @@ function applyScrollEl(el) {
   }
 
   injectKeyframes(animName, kfCss);
+  /* Force reflow so browser registers new @keyframes before animation starts */
+  inner.style.animation = 'none';
+  void inner.offsetWidth;
   inner.style.animation = animName + ' ' + total.toFixed(2) + 's linear infinite';
   el.classList.add('np-scrolling');
 }
