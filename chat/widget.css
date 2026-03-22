@@ -160,17 +160,23 @@ body {
 
 /* ---- Continuation message (same user, grouped like WhatsApp) ---- */
 .chat-msg-cont {
-  margin-top: calc(var(--chat-gap) * -0.5); /* tighter gap within group */
+  margin-top: -4px;         /* tighter gap within a group              */
 }
 .chat-msg-cont .chat-avatar {
   visibility: hidden;       /* keeps column width, hides image/initial */
   pointer-events: none;
+  border: none;             /* also hide the avatar border             */
 }
 .chat-msg-cont .chat-meta {
   display: none;            /* hide name + badges on continuation      */
 }
+/* Continuation bubbles: fully rounded, no tail/pointer */
 .chat-msg-cont .chat-bubble {
-  border-radius: 4px 14px 14px 14px; /* same rounded style */
+  border-radius: 6px 14px 14px 14px;
+}
+.chat-msg-cont .chat-bubble::before,
+.chat-msg-cont .chat-bubble::after {
+  display: none;            /* hide the chat bubble tail/arrow         */
 }
 
 @keyframes msg-in {
