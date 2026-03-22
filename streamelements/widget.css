@@ -292,7 +292,7 @@ body {
 /* Active scroll → animate */
 .np-track.np-scrolling .np-scroll-inner,
 .np-artist.np-scrolling .np-scroll-inner {
-  animation: np-marquee-left var(--np-scroll-speed, 10s) ease-in-out infinite;
+  animation: np-marquee-left var(--np-scroll-speed, 10s) linear infinite;
 }
 
 /* Mode overrides */
@@ -305,30 +305,33 @@ body {
   animation-name: np-marquee-bounce;
 }
 
-/* Keyframes */
+/* Keyframes — linear timing, so % = time
+   Structure: pause-start | scroll | pause-end | instant-reset | pause-before-restart */
 @keyframes np-marquee-left {
   0%   { transform: translateX(0); }
-  12%  { transform: translateX(0); }                         /* Pause am Start */
-  78%  { transform: translateX(var(--np-scroll-dist, 0px)); }/* Einrollen */
-  90%  { transform: translateX(var(--np-scroll-dist, 0px)); }/* Pause am Ende */
-  91%  { transform: translateX(0); }                         /* Reset */
-  100% { transform: translateX(0); }
+  15%  { transform: translateX(0); }                          /* Pause am Anfang  (15%) */
+  72%  { transform: translateX(var(--np-scroll-dist, 0px)); } /* Scroll           (57%) */
+  85%  { transform: translateX(var(--np-scroll-dist, 0px)); } /* Pause am Ende    (13%) */
+  85.5%{ transform: translateX(0); }                          /* Sofort-Reset     (~0%) */
+  100% { transform: translateX(0); }                          /* Pause vor Neustart(14.5%) */
 }
 
 @keyframes np-marquee-right {
   0%   { transform: translateX(var(--np-scroll-dist, 0px)); }
-  12%  { transform: translateX(var(--np-scroll-dist, 0px)); }
-  78%  { transform: translateX(0); }
-  90%  { transform: translateX(0); }
-  91%  { transform: translateX(var(--np-scroll-dist, 0px)); }
+  15%  { transform: translateX(var(--np-scroll-dist, 0px)); }
+  72%  { transform: translateX(0); }
+  85%  { transform: translateX(0); }
+  85.5%{ transform: translateX(var(--np-scroll-dist, 0px)); }
   100% { transform: translateX(var(--np-scroll-dist, 0px)); }
 }
 
 @keyframes np-marquee-bounce {
   0%   { transform: translateX(0); }
-  45%  { transform: translateX(var(--np-scroll-dist, 0px)); }
-  55%  { transform: translateX(var(--np-scroll-dist, 0px)); }
-  100% { transform: translateX(0); }
+  10%  { transform: translateX(0); }                          /* Pause am Anfang */
+  45%  { transform: translateX(var(--np-scroll-dist, 0px)); } /* Scroll links    */
+  55%  { transform: translateX(var(--np-scroll-dist, 0px)); } /* Pause am Ende   */
+  90%  { transform: translateX(0); }                          /* Scroll zurück   */
+  100% { transform: translateX(0); }                          /* Pause vor Neustart */
 }
 
 
