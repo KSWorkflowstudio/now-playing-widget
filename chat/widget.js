@@ -36,7 +36,8 @@ var _msgCount     = 0;
 var _visible      = false;
 var _seenIds      = {};
 var _avatarCache  = {};  /* username → jtvnw.net URL (or '' if not found) */
-var _lastSender   = '';  /* for WhatsApp-style message grouping */
+var _lastSender   = '';  /* for WhatsApp-style message grouping  */
+var _currentSide  = 'left'; /* alternates left/right per user group */
 
 /* ---- Deterministic color from username ---- */
 var COLORS = [
@@ -114,7 +115,8 @@ function hideWidget() {
     w.classList.add('chat-hidden');
     var c = document.getElementById('chat-messages');
     if (c) c.innerHTML = '';
-    _lastSender = '';
+    _lastSender  = '';
+    _currentSide = 'left';
   }, 350);
 }
 
@@ -229,8 +231,13 @@ function addMessage(data) {
   var avatarBg    = usernameColor(displayName);
   var uname       = (data.username || data.name || displayName).toLowerCase().replace(/[^a-z0-9_]/g, '');
 
-  /* WhatsApp-style grouping: detect consecutive messages from same user */
+  /* WhatsApp-style grouping + alternating left/right per user */
   var isCont = (uname !== '' && uname === _lastSender);
+  if (!isCont && _lastSender !== '') {
+    /* New user arrived — flip side */
+    _currentSide = (_currentSide === 'left') ? 'right' : 'left';
+  }
+  var side = _currentSide;
   _lastSender = uname;
 
   /* Name color priority:
@@ -278,9 +285,10 @@ function addMessage(data) {
 
   /* Build message element */
   var msgEl = document.createElement('div');
-  msgEl.className = 'chat-msg chat-msg-in' + (isCont ? ' chat-msg-cont' : '');
+  msgEl.className = 'chat-msg chat-msg-' + side + ' chat-msg-in' + (isCont ? ' chat-msg-cont' : '');
   msgEl.id = 'cm-' + (++_msgCount);
   msgEl.dataset.sender = uname;
+  msgEl.dataset.side   = side;
   msgEl.innerHTML =
     avatarHtml +
     '<div class="chat-bubble">' +

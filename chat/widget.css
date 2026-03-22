@@ -242,8 +242,8 @@ body {
   position: relative;
 }
 
-/* Tiny left-arrow on bubble */
-.chat-bubble::before {
+/* Tiny left-arrow on bubble (left-aligned messages) */
+.chat-msg-left .chat-bubble::before {
   content: '';
   position: absolute;
   top: 8px; left: -6px;
@@ -252,7 +252,7 @@ body {
   border-bottom: 5px solid transparent;
   border-right: 6px solid var(--chat-bubble-border);
 }
-.chat-bubble::after {
+.chat-msg-left .chat-bubble::after {
   content: '';
   position: absolute;
   top: 9px; left: -4px;
@@ -260,6 +260,42 @@ body {
   border-top: 4px solid transparent;
   border-bottom: 4px solid transparent;
   border-right: 5px solid rgba(255,255,255,0.07);
+}
+
+/* ---- Right-aligned message group (alternating users) ---- */
+.chat-msg-right {
+  flex-direction: row-reverse;  /* avatar right, bubble left visually */
+}
+.chat-msg-right .chat-bubble {
+  border-radius: 14px 4px 14px 14px; /* top-right corner points to avatar */
+  text-align: right;
+}
+.chat-msg-right .chat-meta {
+  flex-direction: row-reverse;  /* badges + name reversed */
+  justify-content: flex-start;
+}
+/* Right bubble tail — points to the right toward avatar */
+.chat-msg-right .chat-bubble::before {
+  content: '';
+  position: absolute;
+  top: 8px; right: -6px; left: auto;
+  width: 0; height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 6px solid var(--chat-bubble-border);
+}
+.chat-msg-right .chat-bubble::after {
+  content: '';
+  position: absolute;
+  top: 9px; right: -4px; left: auto;
+  width: 0; height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 5px solid rgba(255,255,255,0.07);
+}
+/* Right continuation — no tail, rounded */
+.chat-msg-right.chat-msg-cont .chat-bubble {
+  border-radius: 14px 6px 14px 14px;
 }
 
 /* ---- Header row (name + badges + role) ---- */
