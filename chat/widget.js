@@ -265,9 +265,11 @@ function applyAppearance() {
   var widget = document.getElementById('chat-widget');
   if (!widget) return;
 
-  /* Font size */
-  var fsMap = { small: '12px', medium: '14px', large: '16px', xl: '20px', xxl: '24px', xxxl: '30px' };
-  root.style.setProperty('--chat-font-size', fsMap[fields.font_size] || '14px');
+  /* Font size — scales message text, name, AND avatar proportionally */
+  var fsPx = { small: 12, medium: 14, large: 16, xl: 20, xxl: 24, xxxl: 30 };
+  var fs   = fsPx[fields.font_size] || 14;
+  root.style.setProperty('--chat-font-size', fs + 'px');
+  root.style.setProperty('--chat-name-size', (fs + 1) + 'px');  /* name slightly larger than body */
 
   /* Font — fixed to Inter/Segoe UI, same as Now Playing widget */
   root.style.setProperty('--chat-font', "'Inter', 'Segoe UI', sans-serif");
@@ -277,9 +279,10 @@ function applyAppearance() {
     root.style.setProperty('--chat-text-color', fields.font_color);
   }
 
-  /* Avatar size */
+  /* Avatar size — explicit setting overrides; falls back to proportional (≈2.5× font size) */
   var avMap = { xs: '24px', small: '30px', medium: '38px', large: '48px', xl: '60px' };
-  root.style.setProperty('--chat-avatar-size', avMap[fields.avatar_size] || '38px');
+  var autoAvatar = Math.round(fs * 2.5) + 'px';
+  root.style.setProperty('--chat-avatar-size', avMap[fields.avatar_size] || autoAvatar);
 
   /* Theme class */
   widget.classList.remove('theme-frosted','theme-light','theme-minimal','theme-neon','theme-liquid','theme-dark');

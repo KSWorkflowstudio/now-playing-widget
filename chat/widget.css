@@ -15,6 +15,7 @@
 
   --chat-font:        'Inter', 'Segoe UI', sans-serif;
   --chat-font-size:   14px;
+  --chat-name-size:   15px;
 
   --chat-bubble-bg:   rgba(255,255,255,0.07);
   --chat-bubble-border: rgba(255,255,255,0.10);
@@ -221,7 +222,7 @@ body {
 }
 
 .chat-name {
-  font-size: 12px;
+  font-size: var(--chat-name-size);
   font-weight: 700;
   line-height: 1;
 }
