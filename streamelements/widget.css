@@ -45,7 +45,8 @@ body {
   font-family: var(--np-font);
   display: flex;
   align-items: flex-start;
-  justify-content: center;
+  justify-content: flex-start;
+  width: 100%;
   min-height: 100vh;
   overflow: hidden;
 }
@@ -55,7 +56,8 @@ body {
   display: flex;
   align-items: center;
   gap: var(--np-gap);
-  width: var(--np-width);
+  width: 100%;          /* fills OBS browser source width → sharp at any resolution */
+  max-width: var(--np-width);
   padding: var(--np-padding);
   background: var(--np-bg);
   backdrop-filter: blur(var(--np-blur)) saturate(180%) brightness(108%);
