@@ -931,6 +931,10 @@ function buildFieldsArray() {
     { name: 'auto_hide_secs', type: 'number',   label: 'Auto-Ausblenden nach (Sekunden, 0 = immer sichtbar)', value: _settings.autoHide || 0 },
     { name: 'text_align',     type: 'dropdown', label: 'Textausrichtung', value: _settings.textAlign || 'left',
       options: { left: 'Linksbündig', center: 'Zentriert', right: 'Rechtsbündig' } },
+    { name: 'text_scroll',    type: 'dropdown', label: 'Laufschrift bei langem Text', value: 'left',
+      options: { left: 'Rechts → Links ✦ (Standard)', right: 'Links → Rechts', bounce: 'Hin & her', none: 'Aus (Text abschneiden)' } },
+    { name: 'scroll_speed',   type: 'dropdown', label: 'Laufschrift-Geschwindigkeit', value: 'normal',
+      options: { slow: 'Langsam', normal: 'Normal ✦ (Standard)', fast: 'Schnell' } },
     { name: 'scale',          type: 'dropdown', label: 'Renderqualität (OBS Browser Source anpassen!)', value: '1',
       options: { '1': '1× Standard (400×120 px)', '2': '2× Scharf – 1080p/1440p (800×240 px)', '4': '4× Ultra – 4K (1600×480 px)' } }
   ];
@@ -1013,6 +1017,8 @@ function connectAndInstall() {
     custom_blur:    0,
     auto_hide_secs: _settings.autoHide  || 0,
     text_align:     _settings.textAlign || 'left',
+    text_scroll:    'left',
+    scroll_speed:   'normal',
     scale:          1
   };
 
