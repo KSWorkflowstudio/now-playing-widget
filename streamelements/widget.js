@@ -166,7 +166,23 @@ function applyAppearance() {
 }
 
 /* ---------- Text scroll helpers ---------- */
-var _scrollSpeedMap = { slow: 22, normal: 14, fast: 8 };
+
+/* Scroll speed in pixels per second */
+var _ppsMap = { slow: 30, normal: 50, fast: 90 };
+
+/* Cache injected @keyframes to avoid redundant DOM writes */
+var _kfCache = {};
+
+function injectKeyframes(name, css) {
+  if (_kfCache[name] === css) return;
+  _kfCache[name] = css;
+  var existing = document.getElementById('np-kf-' + name);
+  if (existing) existing.remove();
+  var s = document.createElement('style');
+  s.id = 'np-kf-' + name;
+  s.textContent = css;
+  document.head.appendChild(s);
+}
 
 function applyScrollEl(el) {
   if (!el) return;
@@ -175,22 +191,66 @@ function applyScrollEl(el) {
 
   var mode = fields.text_scroll || 'left';
   el.classList.remove('np-scrolling');
-  el.style.removeProperty('--np-scroll-dist');
-  el.style.removeProperty('--np-scroll-speed');
+  inner.style.animation = '';
 
   if (mode === 'none') return;
 
-  // Measure overflow — only animate when text is actually clipped
   var overflow = inner.scrollWidth - el.clientWidth;
-  if (overflow > 2) {
-    var dist = (mode === 'right') ? overflow : -overflow;
-    var baseSec = _scrollSpeedMap[fields.scroll_speed] || 10;
-    // Scale speed with text length so long text gets more time
-    var secs = Math.max(baseSec * 0.6, Math.min(baseSec * 2, baseSec + overflow * 0.04));
-    el.style.setProperty('--np-scroll-dist',  dist + 'px');
-    el.style.setProperty('--np-scroll-speed', secs.toFixed(1) + 's');
-    el.classList.add('np-scrolling');
+  if (overflow <= 2) return;
+
+  /* Fixed timing constants (seconds) */
+  var PAUSE_START = 2;   /* pause before scrolling begins          */
+  var PAUSE_END   = 3;   /* hard 3s pause after text reaches end   */
+  var FADE        = 0.35;/* fade-out / fade-in duration (left/right only) */
+  var PAUSE_AFTER = 1.5; /* pause after fade-in before next cycle  */
+
+  var pps      = _ppsMap[fields.scroll_speed] || 50;
+  var scrollSec = Math.max(1.5, overflow / pps);
+  var dist      = (mode === 'right') ? overflow : -overflow;
+  var animName  = 'np-kf-' + el.id + '-' + mode;
+  var total, kfCss;
+
+  /* Helper: convert seconds to percentage string */
+  function pct(t) { return (t / total * 100).toFixed(3) + '%'; }
+
+  if (mode === 'bounce') {
+    /* pause_start | scroll→end | pause_end(3s) | scroll→start | (loop seamlessly) */
+    total  = PAUSE_START + scrollSec + PAUSE_END + scrollSec;
+    var t1 = PAUSE_START;
+    var t2 = t1 + scrollSec;
+    var t3 = t2 + PAUSE_END;
+
+    kfCss = '@keyframes ' + animName + ' {\n' +
+      '  0%        { transform:translateX(0);          animation-timing-function:linear; }\n' +
+      '  ' + pct(t1) + ' { transform:translateX(0);          animation-timing-function:ease-in-out; }\n' +
+      '  ' + pct(t2) + ' { transform:translateX(' + dist + 'px); animation-timing-function:linear; }\n' +
+      '  ' + pct(t3) + ' { transform:translateX(' + dist + 'px); animation-timing-function:ease-in-out; }\n' +
+      '  100%      { transform:translateX(0); }\n}';
+
+  } else {
+    /* pause_start | scroll | pause_end(3s) | fade-out | reset(invisible) | fade-in | pause_after */
+    total       = PAUSE_START + scrollSec + PAUSE_END + FADE + 0.05 + FADE + PAUSE_AFTER;
+    var s1      = PAUSE_START;
+    var s2      = s1 + scrollSec;
+    var s3      = s2 + PAUSE_END;          /* end of 3s pause — starts fading */
+    var s4      = s3 + FADE;              /* fully faded out                  */
+    var s4r     = s4 + 0.05;             /* position reset (invisible)       */
+    var s5      = s4r + FADE;            /* fully faded back in               */
+
+    kfCss = '@keyframes ' + animName + ' {\n' +
+      '  0%        { transform:translateX(0);             opacity:1; animation-timing-function:linear; }\n' +
+      '  ' + pct(s1)  + ' { transform:translateX(0);             opacity:1; animation-timing-function:ease-in-out; }\n' +
+      '  ' + pct(s2)  + ' { transform:translateX(' + dist + 'px);  opacity:1; animation-timing-function:linear; }\n' +
+      '  ' + pct(s3)  + ' { transform:translateX(' + dist + 'px);  opacity:1; animation-timing-function:linear; }\n' +
+      '  ' + pct(s4)  + ' { transform:translateX(' + dist + 'px);  opacity:0; animation-timing-function:linear; }\n' +
+      '  ' + pct(s4r) + ' { transform:translateX(0);             opacity:0; animation-timing-function:linear; }\n' +
+      '  ' + pct(s5)  + ' { transform:translateX(0);             opacity:1; animation-timing-function:linear; }\n' +
+      '  100%      { transform:translateX(0);             opacity:1; }\n}';
   }
+
+  injectKeyframes(animName, kfCss);
+  inner.style.animation = animName + ' ' + total.toFixed(2) + 's linear infinite';
+  el.classList.add('np-scrolling');
 }
 
 function setScrollText(el, text) {
@@ -202,9 +262,12 @@ function setScrollText(el, text) {
     el.innerHTML = '';
     el.appendChild(inner);
   }
+  /* Reset first so new text doesn't inherit stale animation */
+  inner.style.animation = '';
+  el.classList.remove('np-scrolling');
   inner.textContent = text;
-  // Delay so browser calculates scrollWidth after paint
-  setTimeout(function () { applyScrollEl(el); }, 80);
+  /* Wait for layout so scrollWidth is accurate */
+  setTimeout(function () { applyScrollEl(el); }, 100);
 }
 
 /* ---------- iPhone-style animation helpers ---------- */
