@@ -171,8 +171,23 @@ function removeMessage(msgEl, container) {
   if (next && next.classList.contains('chat-msg-cont') &&
       next.dataset.sender === msgEl.dataset.sender) {
     next.classList.remove('chat-msg-cont');
-    var av = next.querySelector('.chat-avatar');
-    if (av) av.style.visibility = '';
+
+    /* Fully restore avatar: continuation msgs have visibility:hidden, transparent bg,
+       no initial letter and no Twitch image loaded — rebuild from scratch */
+    var av = next.querySelector('.chat-avatar-wrap');
+    if (av && fields.show_avatar) {
+      var dName = av.getAttribute('title') || next.dataset.sender || '';
+      av.style.cssText = 'background:' + usernameColor(dName);
+      av.classList.add('chat-avatar-fallback');
+      if (!av.querySelector('.chat-avatar-initial')) {
+        var sp = document.createElement('span');
+        sp.className   = 'chat-avatar-initial';
+        sp.textContent = dName.charAt(0).toUpperCase();
+        av.appendChild(sp);
+      }
+      if (next.dataset.sender) loadTwitchAvatar(next.dataset.sender, av);
+    }
+
     var meta = next.querySelector('.chat-meta');
     if (meta) meta.style.display = '';
   }
