@@ -31,7 +31,6 @@ var fields = {
   color_viewer:         ''
 };
 
-var _hideTimer    = null;
 var _msgCount     = 0;
 var _visible      = false;
 var _seenIds      = {};
@@ -120,14 +119,6 @@ function hideWidget() {
   }, 350);
 }
 
-/* ---- Auto-hide timer ---- */
-function resetHideTimer() {
-  var secs = parseInt(fields.auto_hide_secs, 10) || 0;
-  if (!secs) return;
-  if (_hideTimer) clearTimeout(_hideTimer);
-  _hideTimer = setTimeout(hideWidget, secs * 1000);
-}
-
 /* ---- Async Twitch avatar loader — fetches real jtvnw.net URL via decapi.me ---- */
 function loadTwitchAvatar(uname, wrapEl) {
   function applyUrl(url) {
@@ -169,16 +160,16 @@ function detectRole(badges) {
   return 'viewer';
 }
 
-/* ---- Remove oldest message, promote next if it was a continuation ---- */
-function removeOldest(container) {
+/* ---- Remove a specific message, promote next sibling if it was a continuation ---- */
+function removeMessage(msgEl, container) {
+  if (!msgEl || !msgEl.parentNode) return;
   var msgs = container.querySelectorAll('.chat-msg');
-  if (!msgs.length) return;
-  var oldest = msgs[0];
-  var next   = msgs[1];
+  var idx  = Array.prototype.indexOf.call(msgs, msgEl);
+  var next = msgs[idx + 1];
 
-  /* If next was a continuation from the same user, promote it to group-start */
+  /* If the next message was a continuation of the same sender, promote it to group-start */
   if (next && next.classList.contains('chat-msg-cont') &&
-      next.dataset.sender === oldest.dataset.sender) {
+      next.dataset.sender === msgEl.dataset.sender) {
     next.classList.remove('chat-msg-cont');
     var av = next.querySelector('.chat-avatar');
     if (av) av.style.visibility = '';
@@ -186,9 +177,20 @@ function removeOldest(container) {
     if (meta) meta.style.display = '';
   }
 
-  oldest.classList.remove('chat-msg-in');
-  oldest.classList.add('chat-msg-out');
-  setTimeout(function() { if (oldest.parentNode) oldest.parentNode.removeChild(oldest); }, 380);
+  msgEl.classList.remove('chat-msg-in');
+  msgEl.classList.add('chat-msg-out');
+  setTimeout(function() {
+    if (msgEl.parentNode) msgEl.parentNode.removeChild(msgEl);
+    /* Hide widget when last message is gone */
+    if (!container.querySelector('.chat-msg')) hideWidget();
+  }, 380);
+}
+
+/* ---- Remove oldest message (used by trimToFit) ---- */
+function removeOldest(container) {
+  var msgs = container.querySelectorAll('.chat-msg');
+  if (!msgs.length) return;
+  removeMessage(msgs[0], container);
 }
 
 /* ---- Trim messages: count-based (max>0) or overflow-based (max=0) ---- */
@@ -311,7 +313,14 @@ function addMessage(data) {
   requestAnimationFrame(function() { trimToFit(container); });
 
   showWidget();
-  resetHideTimer();
+
+  /* Per-message auto-hide timer */
+  var secs = parseInt(fields.auto_hide_secs, 10) || 0;
+  if (secs > 0) {
+    (function(el) {
+      setTimeout(function() { removeMessage(el, container); }, secs * 1000);
+    })(msgEl);
+  }
 }
 
 /* ---- Helper: set CSS px var or remove if value ≤ 0 ---- */
