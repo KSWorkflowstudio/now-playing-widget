@@ -46,7 +46,7 @@ body {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;          /* messages stack at bottom       */
+  justify-content: flex-start;        /* header top, messages grow down */
   background: var(--chat-bg);
   backdrop-filter: blur(var(--chat-blur)) saturate(180%) brightness(108%);
   -webkit-backdrop-filter: blur(var(--chat-blur)) saturate(180%) brightness(108%);
@@ -116,11 +116,11 @@ body {
   color: rgba(255,255,255,0.25);
 }
 
-/* ---- Messages list — fills remaining space, newest at bottom ---- */
+/* ---- Messages list — fills remaining space, grows top to bottom ---- */
 .chat-messages {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: flex-start;        /* messages fill from top downward */
   gap: var(--chat-gap);
   padding: 0 10px 4px;
   overflow: hidden;
